@@ -1,0 +1,27 @@
+# 1. Ignore everything by default
+*
+!*/
+
+# 2. Whitelist your core source folders
+!src/
+!scripts/
+!docs/
+!README.md
+!.gitignore
+
+# 3. Whitelist specific file types you care about
+!*.v
+!*.sv
+!*.vhd
+!*.c
+!*.h
+!*.py
+!*.tcl
+!*.xdc
+!*.py
+!Makefile
+
+# 4. Explicitly ignore build artifacts (redundant but safe)
+build/
+*.log
+*.jou
