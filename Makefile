@@ -45,4 +45,4 @@ program:
 	vivado -mode batch -source scripts/program_fpga.tcl -tclargs $(BIT_FILE) $(BOARD)
 
 clean:
-	rm -rf hw_build vitis_ws .Xil *.log *.jou
+	rm -rf hw_build vitis_ws .Xil .gen *.log *.jou

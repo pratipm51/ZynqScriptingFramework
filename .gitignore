@@ -2,24 +2,24 @@
 *
 !*/
 
-# 2. Whitelist your core source folders
+# 2. Whitelist your core folders
 !src/
 !scripts/
 !docs/
+!sw/
 !README.md
+!FRAMEWORK_GUIDE.md
 !.gitignore
+!Makefile
 
-# 3. Whitelist specific file types you care about
-!*.v
-!*.sv
+# 3. Whitelist specific file types
 !*.vhd
+!*.vhdl
 !*.c
 !*.h
 !*.py
 !*.tcl
 !*.xdc
-!*.py
-!Makefile
 
 # 4. Explicitly ignore build artifacts
 hw_build/

@@ -41,4 +41,3 @@ route_design
 # 4. Export Hardware
 write_hw_platform -fixed -force -file "$output_dir/system.xsa"
 write_bitstream -force "$output_dir/system.bit"
-

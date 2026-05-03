@@ -30,4 +30,3 @@ app = client.create_app_component(
 # 3. Link Git-tracked source code
 app.import_sources(from_loc="./sw", target_loc="src", soft_link=True)
 app.build()
-

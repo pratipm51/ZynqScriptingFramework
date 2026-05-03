@@ -37,4 +37,3 @@ program_hw_devices $dev
 close_hw_manager
 
 puts "🎉 Programming Successful!"
-
