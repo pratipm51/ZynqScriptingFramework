@@ -1,13 +1,12 @@
 #include <stdio.h>
-#include "platform.h"
 #include "xil_printf.h"
 
 int main()
 {
-    init_platform();
+    // Note: init_platform() is omitted for simplicity in this project-less flow.
+    // UART is typically initialized by the FSBL.
 
     print("🚀 Zynq VHDL Template Application Running\n\r");
 
-    cleanup_platform();
     return 0;
 }

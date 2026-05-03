@@ -2,6 +2,11 @@ BOARD ?= ebaz
 HW_XSA = ./hw_build/$(BOARD)/system.xsa
 BIT_FILE = ./hw_build/$(BOARD)/system.bit
 
+FSBL_ELF = ./vitis_ws/$(BOARD)_plat/zynq_fsbl/build/fsbl.elf
+APP_ELF = ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
+
+.PHONY: all hw sw boot edit-hw sync-scripts gui program clean
+
 all: hw sw
 
 # Build Hardware
@@ -18,6 +23,18 @@ sw:
     fi
 	@echo "🚀 Building Software for $(BOARD)..."
 	vitis -s scripts/build_sw.py $(BOARD)
+
+# Generate BOOT.BIN
+boot:
+	@if [ ! -f $(FSBL_ELF) ] || [ ! -f $(BIT_FILE) ] || [ ! -f $(APP_ELF) ]; then \
+		echo "❌ Error: Missing artifacts. Run 'make all' first."; \
+		exit 1; \
+	fi
+	@echo "📦 Generating BOOT.BIN for $(BOARD)..."
+	@echo "img: { [bootloader] $(FSBL_ELF) $(BIT_FILE) $(APP_ELF) }" > boot.bif
+	bootgen -image boot.bif -arch zynq -o BOOT.BIN -w
+	@rm boot.bif
+	@echo "✅ BOOT.BIN created successfully."
 
 # GUI Workflow: Open for editing
 edit-hw:
@@ -45,4 +62,4 @@ program:
 	vivado -mode batch -source scripts/program_fpga.tcl -tclargs $(BIT_FILE) $(BOARD)
 
 clean:
-	rm -rf hw_build vitis_ws .Xil .gen *.log *.jou
+	rm -rf hw_build vitis_ws .Xil .gen .srcs .cache project_1 *.log *.jou BOOT.BIN boot.bif

@@ -24,9 +24,10 @@ if {[file exists $bd_script]} {
     source $bd_script
     # Ensure the BD has a wrapper
     set bd_file [get_files *.bd]
+    generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
     add_files -norecurse $wrapper_file
-    set top_module "system_wrapper"
+    set top_module "top"
 } else {
     puts "ℹ️ No BD script found. Using pure HDL flow."
     set top_module "top"
