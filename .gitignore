@@ -21,7 +21,10 @@
 !*.py
 !Makefile
 
-# 4. Explicitly ignore build artifacts (redundant but safe)
-build/
+# 4. Explicitly ignore build artifacts
+hw_build/
+vitis_ws/
+.Xil/
+.gen/
 *.log
 *.jou
