@@ -26,19 +26,28 @@ platform = client.create_platform_component(
     os="standalone",
     cpu="ps7_cortexa9_0"
 )
-platform.build()
 
-# 2. Create Application Component
+# 2. Build the platform (using a retry/sleep loop if it's flaky)
+print(f"🔨 Building Platform {plat_name}...")
+try:
+    platform.build()
+except Exception as e:
+    print(f"⚠️ Initial build attempt failed: {e}. Retrying after sleep...")
+    time.sleep(5)
+    platform.build()
+
+# 3. Create Application Component
 app_name = f"{board}_app"
 print(f"🚀 Creating Application {app_name}...")
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
+
 app = client.create_app_component(
     name=app_name,
     platform=platform_path,
     domain="standalone_ps7_cortexa9_0"
 )
 
-# 3. Import and Build source code
+# 4. Import and Build source code
 print(f"🔨 Importing sources and building {app_name}...")
 app.import_files(
     from_loc=os.path.abspath("./sw"),

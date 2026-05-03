@@ -4,8 +4,9 @@ BIT_FILE = ./hw_build/$(BOARD)/system.bit
 
 FSBL_ELF = ./vitis_ws/$(BOARD)_plat/zynq_fsbl/build/fsbl.elf
 APP_ELF = ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
+PS_INIT = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
 
-.PHONY: all hw sw boot edit-hw sync-scripts gui program clean
+.PHONY: all hw sw boot run edit-hw sync-scripts gui program clean
 
 all: hw sw
 
@@ -35,6 +36,15 @@ boot:
 	bootgen -image boot.bif -arch zynq -o BOOT.BIN -w
 	@rm boot.bif
 	@echo "✅ BOOT.BIN created successfully."
+
+# Launch Software via JTAG (Full Init)
+run:
+	@if [ ! -f $(BIT_FILE) ] || [ ! -f $(APP_ELF) ]; then \
+		echo "❌ Error: Missing artifacts. Run 'make all' first."; \
+		exit 1; \
+	fi
+	@echo "🚀 Launching Software and Hardware on $(BOARD)..."
+	xsct scripts/run_sw.tcl $(BOARD) $(BIT_FILE) $(APP_ELF) $(PS_INIT)
 
 # GUI Workflow: Open for editing
 edit-hw:

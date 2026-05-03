@@ -32,7 +32,6 @@ entity top is
         enet0_phy_clk : out STD_LOGIC;
 
         -- Custom PL Ports
-        clk : in  STD_LOGIC;
         led : out STD_LOGIC
     );
 end top;
@@ -67,6 +66,7 @@ architecture Behavioral of top is
     end component;
 
     signal counter : unsigned(24 downto 0) := (others => '0');
+    signal fclk_internal : std_logic;
 
 begin
     -- Instantiate Zynq System
@@ -94,16 +94,20 @@ begin
             FIXED_IO_ps_porb => FIXED_IO_ps_porb,
             FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
             GPIO_0_0_tri_io => GPIO_0_0_tri_io,
-            enet0_phy_clk => enet0_phy_clk
+            enet0_phy_clk => fclk_internal -- Clock from PS (FCLK_CLK1, ~25MHz)
         );
 
+    -- Drive external port to satisfy top-level entity
+    enet0_phy_clk <= fclk_internal;
+
     -- Blinker Logic
-    process(clk)
+    process(fclk_internal)
     begin
-        if rising_edge(clk) then
+        if rising_edge(fclk_internal) then
             counter <= counter + 1;
         end if;
     end process;
 
-    led <= std_logic(counter(24));
+    -- EBAZ LEDs are active-low. Toggle at ~0.75Hz if clk is 25MHz.
+    led <= not std_logic(counter(24));
 end Behavioral;
