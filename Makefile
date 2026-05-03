@@ -37,6 +37,16 @@ boot:
 	@rm boot.bif
 	@echo "✅ BOOT.BIN created successfully."
 
+# Stage BOOT.BIN to RAM for manual NAND flashing
+load-ram:
+	@if [ ! -f BOOT.BIN ]; then \
+		echo "❌ Error: BOOT.BIN not found. Run 'make boot' first."; \
+		exit 1; \
+	fi
+	@echo "🚀 Pushing BOOT.BIN to DDR at 0x08000000 via JTAG..."
+	xsct -eval "connect; targets -set -nocase -filter {name =~ \"arm*#0\"}; stop; dow -data BOOT.BIN 0x08000000; con; exit"
+	@echo "✅ Data loaded to RAM. Now use U-Boot to write to NAND."
+
 # Launch Software via JTAG (Full Init)
 run:
 	@if [ ! -f $(BIT_FILE) ] || [ ! -f $(APP_ELF) ]; then \
