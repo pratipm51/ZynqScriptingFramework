@@ -23,7 +23,19 @@ This framework provides a structured, version-control-friendly environment for Z
 
 ---
 
-## 3. The Two-Phase Workflow
+## 3. Hardware Hierarchy & Integration
+
+This framework uses a **User-First Top-Level** approach. 
+
+1. **`top.vhd` (The Master)**: This is your project's absolute top-level file. You are responsible for defining the FPGA pins here and instantiating both your custom logic and the Zynq system.
+2. **`system_wrapper` (The Zynq PS)**: When you run `make hw`, the framework generates a VHDL wrapper for your Block Design (named `system`). You must instantiate this component inside your `top.vhd`.
+3. **Your Logic**: You can instantiate your own VHDL modules (like NeoRV32) alongside the Zynq wrapper, connecting them via signals.
+
+**Key Requirement**: Your Block Design **must** be named `system` for the automation to correctly generate the `system_wrapper` component that `top.vhd` expects.
+
+---
+
+## 4. The Two-Phase Workflow
 
 ### Phase 1: The Initialization (GUI Required)
 1. **Reconstruct/Open**: Run `make edit-hw`.
