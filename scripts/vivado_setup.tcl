@@ -13,8 +13,9 @@ proc sync_bd {} {
 }
 
 # Add a Custom Button to the Toolbar
+# Note: Use the plural 'remove_gui_custom_commands' to avoid ambiguity
 if {[get_gui_custom_commands SyncFramework] != ""} {
-    remove_gui_custom_command SyncFramework
+    remove_gui_custom_commands SyncFramework
 }
 
 create_gui_custom_command -name "SyncFramework" \
