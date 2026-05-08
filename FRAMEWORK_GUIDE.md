@@ -40,12 +40,17 @@ This framework uses a **User-First Top-Level** approach.
 ### Phase 1: The Initialization (GUI Required)
 1. **Reconstruct/Open**: Run `make edit-hw`.
 2. **Create Design**: Create a Block Design named **`system`**.
-3. **Configure**: Add the **Zynq7 Processing System** IP. Run "Block Automation".
-4. **Freeze to Script**: In the Vivado Tcl Console, run:
+3. **Configure**: Add the **Zynq7 Processing System** IP. Run "Block Automation" (which applies board-specific presets if available).
+4. **Port Synchronization (Important for New Boards)**:
+   - To ensure your `top.vhd` matches your hardware:
+   - In the Sources tab, right-click `system.bd` and select **"Create HDL Wrapper"**.
+   - Open the generated `system_wrapper.vhd` and copy its port list.
+   - Update the `component system_wrapper` declaration in your `src/hdl/top.vhd` to match this list.
+5. **Freeze to Script**: In the Vivado Tcl Console, run:
    ```tcl
    write_bd_tcl -force ./scripts/ebaz_bd.tcl
    ```
-*(Note: You do **not** need to create a VHDL wrapper or a project manually; the framework handles this automatically during the build phase. Each run of `make hw` or `make edit-hw` will automatically clean up any existing temporary project files to ensure a fresh environment.)*
+*(Note: You do **not** need to commit the generated wrapper; the framework handles this automatically during the build phase. Each run of `make hw` or `make edit-hw` will automatically clean up any existing temporary project files to ensure a fresh environment.)*
 
 ### Phase 2: The Development Loop (CLI)
 | Command | Action |
