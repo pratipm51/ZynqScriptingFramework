@@ -17,6 +17,7 @@ all: hw sw
 # Build Hardware
 hw:
 	@echo "🚀 Building Hardware for $(BOARD)..."
+	rm -rf project_1 myproj
 	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD)
 	rm -f *.log *.jou
 
@@ -63,6 +64,7 @@ run:
 # GUI Workflow: Open for editing
 edit-hw:
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
+	rm -rf project_1 myproj
 	@if [ -f scripts/$(BOARD)_bd.tcl ]; then \
 		vivado -source scripts/$(BOARD)_bd.tcl; \
 	else \

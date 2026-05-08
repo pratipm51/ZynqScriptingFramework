@@ -45,6 +45,7 @@ This framework uses a **User-First Top-Level** approach.
    ```tcl
    write_bd_tcl -force ./scripts/ebaz_bd.tcl
    ```
+*(Note: You do **not** need to create a VHDL wrapper or a project manually; the framework handles this automatically during the build phase. Each run of `make hw` or `make edit-hw` will automatically clean up any existing temporary project files to ensure a fresh environment.)*
 
 ### Phase 2: The Development Loop (CLI)
 | Command | Action |
