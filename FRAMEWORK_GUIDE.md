@@ -58,12 +58,21 @@ This framework uses a **User-First Top-Level** approach.
 | `make hw` | Synthesizes VHDL, implements design, and exports `.xsa` |
 | `make sw` | Compiles C code using Vitis |
 | `make` | Builds both Hardware and Software |
-| `make program` | Uses JTAG to flash the board |
+| `make run` | Initializes PS (enables clocks), downloads Bitstream + ELF, and runs via JTAG |
+| `make program` | Uses JTAG to flash the board (Bitstream only) |
 | `make clean` | Wipes build artifacts |
 
 ---
 
-## 5. Advanced Features
+## 5. Troubleshooting: Why isn't my PL logic running?
+
+If your VHDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will not run** by simply flashing the bitstream with `make program`. 
+
+**The Zynq PS clocks are disabled by default on power-up.** You must run `make run` to execute the PS initialization (via `ps7_init.tcl`), which enables the clocks and resets the PL logic.
+
+---
+
+## 6. Advanced Features
 
 ### External VHDL Libraries
 If your project requires external VHDL codebases that must be compiled into specific libraries (e.g., **NeoRV32**), you can use the `EXTRA_VHDL_LIBS` variable in the `Makefile`.
