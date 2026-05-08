@@ -88,4 +88,4 @@ program:
 	vivado -mode batch -source scripts/program_fpga.tcl -tclargs $(BIT_FILE) $(BOARD)
 
 clean:
-	rm -rf hw_build vitis_ws .Xil .gen .srcs .cache project_1 *.log *.jou BOOT.BIN boot.bif
+	rm -rf hw_build vitis_ws .Xil .gen .srcs .cache project_1 myproj *.log *.jou BOOT.BIN boot.bif
