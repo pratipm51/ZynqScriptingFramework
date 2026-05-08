@@ -15,6 +15,26 @@ file mkdir $output_dir
 
 # 2. Build Flow
 create_project -in_memory -part $part
+
+# --- Handle Extra VHDL Libraries ---
+if {[info exists env(EXTRA_VHDL_LIBS)]} {
+    set libs [split $env(EXTRA_VHDL_LIBS) ","]
+    foreach lib_entry $libs {
+        set parts [split $lib_entry ":"]
+        set lib_name [string trim [lindex $parts 0]]
+        set lib_path [string trim [lindex $parts 1]]
+        if {$lib_name != "" && $lib_path != ""} {
+            set vhd_files [glob -nocomplain "$lib_path/*.vhd" "$lib_path/*.vhdl"]
+            if {[llength $vhd_files] > 0} {
+                puts "📦 Adding [llength $vhd_files] files to library: $lib_name from $lib_path"
+                read_vhdl -library $lib_name $vhd_files
+            } else {
+                puts "⚠️ Warning: No VHDL files found for library $lib_name in $lib_path"
+            }
+        }
+    }
+}
+
 read_vhdl [glob -nocomplain ./src/hdl/*.vhd ./src/hdl/*.vhdl]
 read_xdc "./src/constr/${board_type}.xdc"
 

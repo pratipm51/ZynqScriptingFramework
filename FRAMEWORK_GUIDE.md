@@ -45,7 +45,24 @@ This framework provides a structured, version-control-friendly environment for Z
 
 ---
 
-## 4. Git Best Practices
+## 5. Advanced Features
+
+### External VHDL Libraries
+If your project requires external VHDL codebases that must be compiled into specific libraries (e.g., **NeoRV32**), you can use the `EXTRA_VHDL_LIBS` variable in the `Makefile`.
+
+Format: `lib_name:path/to/rtl` (comma-separated for multiple libraries).
+
+**Example for NeoRV32:**
+```make
+EXTRA_VHDL_LIBS ?= neorv32:../neorv32/rtl/core
+```
+The framework will automatically:
+1. Detect all `.vhd` and `.vhdl` files in the specified path.
+2. Compile them into the library name provided.
+
+---
+
+## 6. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**
