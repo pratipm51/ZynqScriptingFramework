@@ -46,10 +46,9 @@ This framework uses a **User-First Top-Level** approach.
    - In the Sources tab, right-click `system.bd` and select **"Create HDL Wrapper"**.
    - Open the generated `system_wrapper.vhd` and copy its port list.
    - Update the `component system_wrapper` declaration in your `src/hdl/top.vhd` to match this list.
-5. **Freeze to Script**: In the Vivado Tcl Console, run:
-   ```tcl
-   write_bd_tcl -force ./scripts/ebaz_bd.tcl
-   ```
+5. **Freeze to Script**:
+   - In the Vivado GUI, simply click the new **"Sync to Framework"** button on the top toolbar.
+   - Alternatively, you can still run `write_bd_tcl -force ./scripts/ebaz_bd.tcl` in the Tcl Console.
 *(Note: You do **not** need to commit the generated wrapper; the framework handles this automatically during the build phase. Each run of `make hw` or `make edit-hw` will automatically clean up any existing temporary project files to ensure a fresh environment.)*
 
 ### Phase 2: The Development Loop (CLI)

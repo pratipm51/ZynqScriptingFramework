@@ -66,7 +66,7 @@ edit-hw:
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
 	rm -rf project_1 myproj
 	@if [ -f scripts/$(BOARD)_bd.tcl ]; then \
-		vivado -source scripts/$(BOARD)_bd.tcl; \
+		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD); \
 	else \
 		vivado; \
 	fi
