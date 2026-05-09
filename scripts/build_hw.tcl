@@ -1,3 +1,4 @@
+# scripts/build_hw.tcl - Optimized for Library and Order Support
 set board_type [lindex $argv 0]
 
 # 1. Hardware Definitions
@@ -13,6 +14,43 @@ set output_dir "./hw_build/${board_type}"
 set bd_script "./scripts/${board_type}_bd.tcl"
 file mkdir $output_dir
 
+# --- Helper: Read VHDL files with Order Support ---
+proc read_vhdl_ordered {lib_name path} {
+    set order_file "$path/compile_order.txt"
+    set vhd_files {}
+
+    if {[file exists $order_file]} {
+        puts "📜 Using explicit compile order from $order_file"
+        set fp [open $order_file r]
+        set lines [split [read $fp] "\n"]
+        close $fp
+        foreach line $lines {
+            set f [string trim $line]
+            if {$f != "" && ![string match "#*" $f]} {
+                lappend vhd_files "$path/$f"
+            }
+        }
+    } else {
+        # Fallback: Smart Sort (Packages first)
+        set all_files [glob -nocomplain "$path/*.vhd" "$path/*.vhdl"]
+        set pkgs {}
+        set logic {}
+        foreach f $all_files {
+            if {[string match "*_package.vhd*" $f] || [string match "*_pkg.vhd*" $f]} {
+                lappend pkgs $f
+            } else {
+                lappend logic $f
+            }
+        }
+        set vhd_files [concat [lsort $pkgs] [lsort $logic]]
+    }
+
+    if {[llength $vhd_files] > 0} {
+        puts "📦 Reading [llength $vhd_files] files into library: $lib_name"
+        read_vhdl -library $lib_name $vhd_files
+    }
+}
+
 # 2. Build Flow
 create_project -in_memory -part $part
 
@@ -24,25 +62,19 @@ if {[info exists env(EXTRA_VHDL_LIBS)]} {
         set lib_name [string trim [lindex $parts 0]]
         set lib_path [string trim [lindex $parts 1]]
         if {$lib_name != "" && $lib_path != ""} {
-            set vhd_files [glob -nocomplain "$lib_path/*.vhd" "$lib_path/*.vhdl"]
-            if {[llength $vhd_files] > 0} {
-                puts "📦 Adding [llength $vhd_files] files to library: $lib_name from $lib_path"
-                read_vhdl -library $lib_name $vhd_files
-            } else {
-                puts "⚠️ Warning: No VHDL files found for library $lib_name in $lib_path"
-            }
+            read_vhdl_ordered $lib_name $lib_path
         }
     }
 }
 
-read_vhdl [glob -nocomplain ./src/hdl/*.vhd ./src/hdl/*.vhdl]
+# --- Read Local Sources ---
+read_vhdl_ordered xil_defaultlib "./src/hdl"
 read_xdc "./src/constr/${board_type}.xdc"
 
 # --- Auto-Detect Block Design ---
 if {[file exists $bd_script]} {
     puts "📝 Found BD script for $board_type. Sourcing..."
     source $bd_script
-    # Ensure the BD has a wrapper
     set bd_file [get_files *.bd]
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
