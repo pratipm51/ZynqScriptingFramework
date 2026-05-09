@@ -20,9 +20,9 @@ all: hw sw
 # Build Hardware
 hw:
 	@echo "🚀 Building Hardware for $(BOARD)..."
-	rm -rf project_1 myproj
+	rm -rf project_1 myproj clockInfo.txt
 	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD)
-	rm -f *.log *.jou
+	rm -f *.log *.jou clockInfo.txt
 
 # Build Software
 sw:
@@ -67,7 +67,7 @@ run:
 # GUI Workflow: Open for editing
 edit-hw:
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
-	rm -rf project_1 myproj
+	rm -rf project_1 myproj clockInfo.txt
 	@if [ -f board_configs/$(BOARD)_bd.tcl ]; then \
 		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD); \
 	else \
@@ -91,4 +91,4 @@ program:
 	vivado -mode batch -source scripts/program_fpga.tcl -tclargs $(BIT_FILE) $(BOARD)
 
 clean:
-	rm -rf hw_build vitis_ws .Xil .gen .srcs .cache project_1 myproj *.log *.jou BOOT.BIN boot.bif
+	rm -rf hw_build vitis_ws .Xil .gen .srcs .cache project_1 myproj *.log *.jou BOOT.BIN boot.bif clockInfo.txt
