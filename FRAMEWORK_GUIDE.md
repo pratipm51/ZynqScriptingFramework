@@ -102,6 +102,23 @@ library neorv32;
 use neorv32.neorv32_package.all;
 ```
 
+### Multiple Software Directories (`sw_sources.txt`)
+To include multiple software source or include directories, create a file named `sw_sources.txt` in your project root. List one directory path per line:
+
+```text
+# Example sw_sources.txt
+./sw
+../shared_libs/common
+../neorv32/sw/lib/runtime
+```
+
+The framework will automatically:
+1. Read this file during `make sw`.
+2. Import all files from these directories into your Vitis project.
+3. If this file is missing, it falls back to the `./sw` directory.
+
+---
+
 ### VHDL Compilation Order
 For complex designs with multiple packages and dependencies, you can control the compilation order:
 

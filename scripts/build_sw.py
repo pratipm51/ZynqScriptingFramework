@@ -56,12 +56,23 @@ app = client.create_app_component(
     domain="standalone_ps7_cortexa9_0"
 )
 
-# 4. Import and Build source code from multiple directories
+# 4. Import source code from sw_sources.txt or environment
 print(f"🔨 Importing sources and building {app_name}...")
 
-# Get directories from environment variable
-sw_dirs_raw = os.environ.get("USER_SW_DIRS", "./sw")
-sw_dirs = [d.strip() for d in sw_dirs_raw.split(",")]
+sw_dirs = []
+sources_file = "sw_sources.txt"
+
+if os.path.exists(sources_file):
+    print(f"📖 Reading software sources from {sources_file}")
+    with open(sources_file, "r") as f:
+        for line in f:
+            d = line.strip()
+            if d and not d.startswith("#"):
+                sw_dirs.append(d)
+else:
+    # Fallback to environment variable or default
+    sw_dirs_raw = os.environ.get("USER_SW_DIRS", "./sw")
+    sw_dirs = [d.strip() for d in sw_dirs_raw.split(",")]
 
 for src_dir in sw_dirs:
     if os.path.exists(src_dir):
