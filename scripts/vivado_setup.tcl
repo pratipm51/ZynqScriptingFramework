@@ -4,7 +4,7 @@ set board_name [lindex $argv 0]
 # Define the Sync Procedure
 proc sync_bd {} {
     global board_name
-    set script_file "./scripts/${board_name}_bd.tcl"
+    set script_file "./board_configs/${board_name}_bd.tcl"
     if { [catch {write_bd_tcl -force $script_file} err] } {
         send_msg_id "Framework-002" "ERROR" "Failed to sync BD: $err"
     } else {
@@ -25,7 +25,7 @@ create_gui_custom_command -name "SyncFramework" \
     -description "Saves the current Block Design into the framework scripts folder"
 
 # Load the actual Block Design script
-set bd_script "./scripts/${board_name}_bd.tcl"
+set bd_script "./board_configs/${board_name}_bd.tcl"
 if {[file exists $bd_script]} {
     source $bd_script
 }

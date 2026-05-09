@@ -69,7 +69,7 @@ run:
 edit-hw:
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
 	rm -rf project_1 myproj
-	@if [ -f scripts/$(BOARD)_bd.tcl ]; then \
+	@if [ -f board_configs/$(BOARD)_bd.tcl ]; then \
 		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD); \
 	else \
 		vivado; \
@@ -78,7 +78,7 @@ edit-hw:
 # Reminder for the user
 sync-scripts:
 	@echo "📝 Inside Vivado Tcl Console, run:"
-	@echo "   write_bd_tcl -force ./scripts/$(BOARD)_bd.tcl"
+	@echo "   write_bd_tcl -force ./board_configs/$(BOARD)_bd.tcl"
 
 gui:
 	vivado -mode gui &

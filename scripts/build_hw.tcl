@@ -11,7 +11,7 @@ if {$board_type == "ebaz"} {
 }
 
 set output_dir "./hw_build/${board_type}"
-set bd_script "./scripts/${board_type}_bd.tcl"
+set bd_script "./board_configs/${board_type}_bd.tcl"
 file mkdir $output_dir
 
 # --- Helper: Read VHDL files with Order Support ---

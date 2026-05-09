@@ -15,7 +15,8 @@ This framework provides a structured, version-control-friendly environment for Z
 │   ├── hdl/       <-- Your VHDL files (*.vhd, *.vhdl)
 │   └── constr/    <-- Physical constraints (*.xdc)
 ├── sw/            <-- C application source code (*.c, *.h)
-├── scripts/       <-- The automation: build_hw.tcl, build_sw.py, program.tcl
+├── board_configs/ <-- Your Block Design scripts (*_bd.tcl)
+├── scripts/       <-- The framework engine (Automation scripts)
 ├── docs/          <-- Design documentation
 ├── Makefile       <-- The framework command center
 └── .gitignore     <-- Whitelist-based filter for Git
