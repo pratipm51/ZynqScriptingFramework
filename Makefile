@@ -3,6 +3,10 @@ BOARD ?= ebaz
 EXTRA_VHDL_LIBS ?= neorv32:../neorv32/rtl/core
 export EXTRA_VHDL_LIBS
 
+# Software source directories, comma-separated
+USER_SW_DIRS ?= ./sw
+export USER_SW_DIRS
+
 HW_XSA = ./hw_build/$(BOARD)/system.xsa
 BIT_FILE = ./hw_build/$(BOARD)/system.bit
 
