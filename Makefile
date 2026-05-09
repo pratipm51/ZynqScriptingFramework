@@ -1,10 +1,9 @@
 BOARD ?= ebaz
-# Extra VHDL libraries in "lib_name:path" format, comma-separated
-EXTRA_VHDL_LIBS ?= neorv32:../neorv32/rtl/core
+
+# Extra VHDL libraries (alternative to vhdl_libs.txt file)
 export EXTRA_VHDL_LIBS
 
-# Software source directories, comma-separated
-USER_SW_DIRS ?= ./sw
+# Software source directories (alternative to sw_sources.txt file)
 export USER_SW_DIRS
 
 HW_XSA = ./hw_build/$(BOARD)/system.xsa

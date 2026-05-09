@@ -54,16 +54,31 @@ proc read_vhdl_ordered {lib_name path} {
 # 2. Build Flow
 create_project -in_memory -part $part
 
-# --- Handle Extra VHDL Libraries ---
-if {[info exists env(EXTRA_VHDL_LIBS)]} {
-    set libs [split $env(EXTRA_VHDL_LIBS) ","]
-    foreach lib_entry $libs {
-        set parts [split $lib_entry ":"]
-        set lib_name [string trim [lindex $parts 0]]
-        set lib_path [string trim [lindex $parts 1]]
-        if {$lib_name != "" && $lib_path != ""} {
-            read_vhdl_ordered $lib_name $lib_path
+# --- Handle Extra VHDL Libraries from vhdl_libs.txt or environment ---
+set libs_file "vhdl_libs.txt"
+set lib_entries {}
+
+if {[file exists $libs_file]} {
+    puts "📖 Reading VHDL libraries from $libs_file"
+    set fp [open $libs_file r]
+    set lines [split [read $fp] "\n"]
+    close $fp
+    foreach line $lines {
+        set entry [string trim $line]
+        if {$entry != "" && ![string match "#*" $entry]} {
+            lappend lib_entries $entry
         }
+    }
+} elseif {[info exists env(EXTRA_VHDL_LIBS)]} {
+    set lib_entries [split $env(EXTRA_VHDL_LIBS) ","]
+}
+
+foreach lib_entry $lib_entries {
+    set parts [split $lib_entry ":"]
+    set lib_name [string trim [lindex $parts 0]]
+    set lib_path [string trim [lindex $parts 1]]
+    if {$lib_name != "" && $lib_path != ""} {
+        read_vhdl_ordered $lib_name $lib_path
     }
 }
 

@@ -77,24 +77,23 @@ If your VHDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will 
 
 **The Zynq PS clocks are disabled by default on power-up.** You must run `make run` to execute the PS initialization (via `ps7_init.tcl`), which enables the clocks and resets the PL logic.
 
----
-
 ## 6. Advanced Features
 
-### External VHDL Libraries (`EXTRA_VHDL_LIBS`)
-If your project requires external VHDL codebases that must be compiled into specific libraries (e.g., **NeoRV32**), you can use the `EXTRA_VHDL_LIBS` variable in the `Makefile`.
+### External VHDL Libraries (`vhdl_libs.txt`)
+If your project requires external VHDL codebases that must be compiled into specific libraries (e.g., **NeoRV32**), create a file named `vhdl_libs.txt` in your project root. 
 
-**Format:** `lib_name:path/to/rtl` (comma-separated for multiple libraries).
+**Format:** `lib_name:path/to/rtl` (one per line).
+
+**Example `vhdl_libs.txt`:**
+```text
+neorv32:/home/user/neorv32/rtl/core
+custom_lib:./src/custom_rtl
+```
 
 **Key Features:**
 - **Automatic Detection:** The framework finds all `.vhd` and `.vhdl` files in the specified path.
 - **Library Mapping:** It uses Vivado's `read_vhdl -library` command to assign the files to the correct namespace.
 - **Path Flexibility:** Supports both **absolute paths** (recommended for shared cores) and **relative paths**.
-
-**Example for NeoRV32 + Custom Lib:**
-```make
-EXTRA_VHDL_LIBS ?= neorv32:/home/user/neorv32/rtl/core,custom_lib:./src/custom_rtl
-```
 
 **VHDL Usage:**
 Once configured, you can access the library in your code like this:
@@ -102,6 +101,8 @@ Once configured, you can access the library in your code like this:
 library neorv32;
 use neorv32.neorv32_package.all;
 ```
+
+---
 
 ### Multiple Software Directories (`sw_sources.txt`)
 To include multiple software source or include directories, create a file named `sw_sources.txt` in your project root. List one directory path per line:
