@@ -1,0 +1,4 @@
+# vhdl_libs.txt - List external VHDL libraries here
+# Format: lib_name:path/to/rtl
+# Example:
+# neorv32:/home/user/neorv32/rtl/core
