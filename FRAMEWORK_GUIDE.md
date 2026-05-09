@@ -102,6 +102,12 @@ library neorv32;
 use neorv32.neorv32_package.all;
 ```
 
+### VHDL Compilation Order
+For complex designs with multiple packages and dependencies, you can control the compilation order:
+
+1. **Smart Sort (Automatic)**: By default, the framework automatically identifies files containing `_package` or `_pkg` in their name and compiles them before other logic files in the same library.
+2. **Explicit Order**: If you need total control, create a file named `compile_order.txt` in the source folder (e.g., `src/hdl/compile_order.txt`). List one filename per line in the desired compilation sequence.
+
 ---
 
 ## 7. Git Best Practices
