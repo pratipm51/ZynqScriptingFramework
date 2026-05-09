@@ -52,14 +52,21 @@ This framework uses a **User-First Top-Level** approach.
 *(Note: You do **not** need to commit the generated wrapper; the framework handles this automatically during the build phase. Each run of `make hw` or `make edit-hw` will automatically clean up any existing temporary project files to ensure a fresh environment.)*
 
 ### Phase 2: The Development Loop (CLI)
-| Command | Action |
+
+Below is the complete guide to the framework's `Makefile` targets:
+
+| Target | Description |
 | :--- | :--- |
-| `make hw` | Synthesizes VHDL, implements design, and exports `.xsa` |
-| `make sw` | Compiles C code using Vitis |
-| `make` | Builds both Hardware and Software |
-| `make run` | Initializes PS (enables clocks), downloads Bitstream + ELF, and runs via JTAG |
-| `make program` | Uses JTAG to flash the board (Bitstream only) |
-| `make clean` | Wipes build artifacts |
+| `make hw` | **Hardware Build:** Runs Vivado in batch mode. Synthesizes VHDL, implements the design, generates the Bitstream, and exports the `.xsa` platform. |
+| `make sw` | **Software Build:** Runs Vitis. Creates/updates the platform component and compiles the C application into an `.elf` file. |
+| `make` | **Full Build:** Shortcut for `make hw` followed by `make sw`. |
+| `make run` | **JTAG Execution:** The primary "Test" command. Performs a full PS7 initialization (enables clocks), downloads the Bitstream and ELF, and starts execution. |
+| `make boot` | **Boot Image:** Uses `bootgen` to create a `BOOT.BIN` file containing the FSBL, Bitstream, and Application for SD/NAND booting. |
+| `make program` | **Flash FPGA:** Downloads *only* the Bitstream to the FPGA. (Note: Clocks will remain disabled until a software init occurs). |
+| `make edit-hw` | **GUI Editor:** Opens the Block Design in Vivado. Automatically adds the **"Sync to Framework"** button to the toolbar for easy saving. |
+| `make load-ram` | **Maintenance:** Pushes the `BOOT.BIN` to DDR memory via JTAG at `0x08000000`. Useful for manual NAND flashing via U-Boot. |
+| `make gui` | **Vivado GUI:** Launches a standard Vivado GUI instance in the background. |
+| `make clean` | **Cleanup:** Wipes all build artifacts (`hw_build`, `vitis_ws`), temporary Vivado projects (`project_1`, `myproj`), and log files. |
 
 ---
 
@@ -88,7 +95,7 @@ The framework will automatically:
 
 ---
 
-## 6. Git Best Practices
+## 7. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**
