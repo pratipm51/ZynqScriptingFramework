@@ -129,16 +129,24 @@ For complex designs with multiple packages and dependencies, you can control the
 
 ---
 
-## 7. Custom Soft-CPU Support (e.g., NeoRV32)
+## 7. Hybrid Multi-CPU Support (ARM + Soft-CPU)
 
-While the framework uses Vitis/ARM by default, it is fully CPU-agnostic. You can use any soft-CPU (RISC-V, MicroBlaze, etc.) by following these steps:
+This framework supports true **Dual-CPU** development, where you can have custom code running on both the Zynq ARM core and a soft-CPU in the PL (e.g., NeoRV32).
 
-1. **Create `sw/Makefile`**: If the framework detects this file, it will prioritize it and skip the Vitis build.
-2. **Configure Output**: In your main project `Makefile`, set the `APP_ELF` variable to point to your custom compiler's output (e.g., `APP_ELF = sw/main.elf`).
-3. **Run normally**: `make sw` and `make run` will now use your custom build rules while maintaining the same workflow.
+### Case A: Custom Soft-CPU (PL) Only
+If you only care about the soft-CPU:
+1. Create `sw/Makefile` (see template at `sw/Makefile.neorv32`).
+2. The framework will still build a Vitis "Platform" (to handle Zynq clocks/DDR init) but will use your Makefile for the main app.
+3. Set `APP_ELF = sw/main.elf` in your project `Makefile`.
 
-**Example for NeoRV32:**
-See the template at `sw/Makefile.neorv32`. You can copy this to `sw/Makefile` and adjust the `RISCV_PREFIX` and `MARCH` flags to match your setup.
+### Case B: Custom ARM (PS) + Custom Soft-CPU (PL)
+If you want to customize the Zynq side (e.g., for Ethernet drivers) while also running a soft-CPU:
+1. **Soft-CPU**: Define its build in `sw/Makefile` and `sw_sources.txt`.
+2. **ARM core**: Create a file named **`arm_sources.txt`** and list the directories containing your ARM C code.
+3. The framework will build **two separate ELFs** and load both of them automatically during `make run`.
+
+### Case C: ARM Only (Standard Zynq)
+If you aren't using a soft-CPU, just put your code in `sw/` (or use `arm_sources.txt`). The framework defaults to the standard Vitis ARM build flow.
 
 ---
 

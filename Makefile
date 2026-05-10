@@ -12,6 +12,8 @@ BIT_FILE = ./hw_build/$(BOARD)/system.bit
 FSBL_ELF = ./vitis_ws/$(BOARD)_plat/zynq_fsbl/build/fsbl.elf
 # Default application ELF path (can be overridden for custom CPUs)
 APP_ELF ?= ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
+# Zynq PS-side application (Active if arm_sources.txt exists)
+ZYNQ_ELF = ./vitis_ws/zynq_app/build/zynq_app.elf
 PS_INIT = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
 
 .PHONY: all hw sw boot run edit-hw sync-scripts gui program clean
@@ -31,12 +33,11 @@ sw:
         echo "❌ Error: Hardware XSA not found at $(HW_XSA). Run 'make hw' first."; \
         exit 1; \
     fi
+	@echo "🚀 Ensuring Zynq Platform is ready..."
+	vitis -s scripts/build_sw.py $(BOARD)
 	@if [ -f sw/Makefile ]; then \
-		echo "🛠️  Detected custom software Makefile. Building..."; \
+		echo "🛠️  Detected custom software Makefile. Building Application..."; \
 		$(MAKE) -C sw BOARD=$(BOARD); \
-	else \
-		echo "🚀 Building Software for $(BOARD) using Vitis..."; \
-		vitis -s scripts/build_sw.py $(BOARD); \
 	fi
 
 # Generate BOOT.BIN
@@ -63,12 +64,13 @@ load-ram:
 
 # Launch Software via JTAG (Full Init)
 run:
-	@if [ ! -f $(BIT_FILE) ] || [ ! -f $(APP_ELF) ]; then \
-		echo "❌ Error: Missing artifacts. Run 'make all' first."; \
+	@if [ ! -f $(BIT_FILE) ]; then \
+		echo "❌ Error: Bitstream not found. Run 'make hw' first."; \
 		exit 1; \
 	fi
-	@echo "🚀 Launching Software and Hardware on $(BOARD)..."
-	xsct scripts/run_sw.tcl $(BOARD) $(BIT_FILE) $(APP_ELF) $(PS_INIT)
+	@echo "🚀 Launching Full System on $(BOARD)..."
+	@# We pass BOTH ELFs to the run script. It will handle loading them correctly.
+	xsct scripts/run_sw.tcl $(BOARD) $(BIT_FILE) $(APP_ELF) $(PS_INIT) $(ZYNQ_ELF)
 
 # GUI Workflow: Open for editing
 edit-hw:

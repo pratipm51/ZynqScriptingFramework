@@ -1,8 +1,9 @@
 # scripts/run_sw.tcl
 set board [lindex $argv 0]
 set bitstream [lindex $argv 1]
-set elf [lindex $argv 2]
+set primary_elf [lindex $argv 2]
 set ps7_init [lindex $argv 3]
+set secondary_elf [lindex $argv 4]
 
 puts "🚀 Connecting to hw_server..."
 if { [catch {connect} err] } {
@@ -33,10 +34,22 @@ source $ps7_init
 ps7_init
 ps7_post_config
 
-puts "🚀 Loading Application ELF: $elf..."
-dow $elf
+# Load the Primary ELF (usually the Soft-CPU or default app)
+if {[file exists $primary_elf]} {
+    puts "🚀 Loading Primary ELF: $primary_elf..."
+    dow $primary_elf
+} else {
+    puts "ℹ️ Primary ELF not found ($primary_elf). Skipping."
+}
 
-puts "🎉 Executing Application..."
+# Load the Secondary ELF (usually the custom Zynq PS app)
+if {$secondary_elf != "" && [file exists $secondary_elf]} {
+    puts "🚀 Loading Secondary (Zynq PS) ELF: $secondary_elf..."
+    # We stay on the ARM target to load this
+    dow $secondary_elf
+}
+
+puts "🎉 Executing Application(s)..."
 con
 after 2000
 exit

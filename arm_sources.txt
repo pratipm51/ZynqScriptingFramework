@@ -1,0 +1,6 @@
+# arm_sources.txt - List software directories for the Zynq ARM PS core here
+# Use this to customize the PS side (e.g. Ethernet drivers, PL bridge logic)
+# Format: one directory path per line
+# Example:
+# ./sw/arm
+# ../shared_arm_libs
