@@ -129,7 +129,20 @@ For complex designs with multiple packages and dependencies, you can control the
 
 ---
 
-## 7. Git Best Practices
+## 7. Custom Soft-CPU Support (e.g., NeoRV32)
+
+While the framework uses Vitis/ARM by default, it is fully CPU-agnostic. You can use any soft-CPU (RISC-V, MicroBlaze, etc.) by following these steps:
+
+1. **Create `sw/Makefile`**: If the framework detects this file, it will prioritize it and skip the Vitis build.
+2. **Configure Output**: In your main project `Makefile`, set the `APP_ELF` variable to point to your custom compiler's output (e.g., `APP_ELF = sw/main.elf`).
+3. **Run normally**: `make sw` and `make run` will now use your custom build rules while maintaining the same workflow.
+
+**Example for NeoRV32:**
+See the template at `sw/Makefile.neorv32`. You can copy this to `sw/Makefile` and adjust the `RISCV_PREFIX` and `MARCH` flags to match your setup.
+
+---
+
+## 8. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**

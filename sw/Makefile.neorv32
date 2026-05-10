@@ -1,0 +1,33 @@
+# --- NeoRV32 Example Makefile ---
+# This is a template for using a custom RISC-V toolchain instead of Vitis.
+
+RISCV_PREFIX ?= riscv32-xilinx-elf-
+CC      = $(RISCV_PREFIX)gcc
+OBJCOPY = $(RISCV_PREFIX)objcopy
+SIZE    = $(RISCV_PREFIX)size
+
+# NeoRV32 specific flags (Adjust to your CPU configuration)
+MARCH  ?= rv32i_zicsr
+MABI   ?= ilp32
+
+# Compilation Flags
+CFLAGS += -march=$(MARCH) -mabi=$(MABI) -O2 -ffunction-sections -fdata-sections
+CFLAGS += -Wall -Wextra -Wstrict-prototypes
+
+# Find all sources using the same sw_sources.txt format as the main framework
+SW_SOURCES_FILE = ../sw_sources.txt
+INC_DIRS = .
+SRC_FILES = $(wildcard *.c)
+
+# Target Output
+TARGET = main.elf
+
+all: $(TARGET)
+
+$(TARGET): $(SRC_FILES)
+	@echo "🔨 Compiling for NeoRV32..."
+	$(CC) $(CFLAGS) $(foreach dir,$(INC_DIRS),-I$(dir)) $^ -o $@ -Wl,--gc-sections
+	$(SIZE) $@
+
+clean:
+	rm -f $(TARGET) *.o

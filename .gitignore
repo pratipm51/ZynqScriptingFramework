@@ -22,6 +22,7 @@
 !*.py
 !*.tcl
 !*.xdc
+!sw/Makefile*
 
 # 4. Explicitly ignore build artifacts
 hw_build/
