@@ -9,17 +9,15 @@ board = sys.argv[1] if len(sys.argv) > 1 else "ebaz"
 XSA_PATH = os.path.abspath(f"./hw_build/{board}/system.xsa")
 WORKSPACE = os.path.abspath(f"./vitis_ws")
 
-# Nuclear Option: Clean workspace to avoid "Already Exists" or version issues
+# Standard clean start
 if os.path.exists(WORKSPACE):
-    print("🧹 Cleaning existing Vitis workspace...")
     shutil.rmtree(WORKSPACE)
 
-print("🚀 Starting Vitis Client...")
 client = vitis.create_client()
-time.sleep(2) # Give the server a moment to settle
+time.sleep(2)
 client.set_workspace(path=WORKSPACE)
 
-# 1. Create Platform Component
+# 1. Create Platform
 plat_name = f"{board}_plat"
 print(f"🚀 Creating Platform {plat_name}...")
 platform = client.create_platform_component(
@@ -28,24 +26,10 @@ platform = client.create_platform_component(
     os="standalone",
     cpu="ps7_cortexa9_0"
 )
-time.sleep(2) # Wait for platform analysis to finish
+time.sleep(2)
+platform.build()
 
-# 2. Build the platform (with robust retry)
-print(f"🔨 Building Platform {plat_name}...")
-max_retries = 2
-for attempt in range(max_retries):
-    try:
-        platform.build()
-        break
-    except Exception as e:
-        if attempt < max_retries - 1:
-            print(f"⚠️ Attempt {attempt+1} failed: {e}. Retrying...")
-            time.sleep(5)
-        else:
-            print(f"❌ Platform build failed after {max_retries} attempts.")
-            raise
-
-# 3. Create Application Component
+# 2. Create Application
 app_name = f"{board}_app"
 print(f"🚀 Creating Application {app_name}...")
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
@@ -56,34 +40,23 @@ app = client.create_app_component(
     domain="standalone_ps7_cortexa9_0"
 )
 
-# 4. Import source code from sw_sources.txt or environment
-print(f"🔨 Importing sources and building {app_name}...")
-
+# 3. Standard Folder Import
+# Vitis 2025.2 handles this correctly using sw_sources.txt
 sw_dirs = []
 sources_file = "sw_sources.txt"
 
 if os.path.exists(sources_file):
-    print(f"📖 Reading software sources from {sources_file}")
     with open(sources_file, "r") as f:
-        for line in f:
-            d = line.strip()
-            if d and not d.startswith("#"):
-                sw_dirs.append(d)
+        sw_dirs = [os.path.abspath(l.strip()) for l in f if l.strip() and not l.startswith("#")]
 else:
-    # Fallback to environment variable or default
-    sw_dirs_raw = os.environ.get("USER_SW_DIRS", "./sw")
-    sw_dirs = [d.strip() for d in sw_dirs_raw.split(",")]
+    sw_dirs = [os.path.abspath("./sw")]
 
 for src_dir in sw_dirs:
     if os.path.exists(src_dir):
-        print(f"📦 Importing files from: {src_dir}")
-        app.import_files(
-            from_loc=os.path.abspath(src_dir),
-            dest_dir_in_cmp="src"
-        )
-    else:
-        print(f"⚠️ Warning: Software directory not found: {src_dir}")
+        print(f"📦 Importing {src_dir}")
+        app.import_files(from_loc=src_dir, dest_dir_in_cmp="src")
 
+# 4. Build
+print(f"🔨 Building {app_name}...")
 app.build()
-
 print("✅ Software Build Complete!")
