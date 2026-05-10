@@ -10,7 +10,8 @@ HW_XSA = ./hw_build/$(BOARD)/system.xsa
 BIT_FILE = ./hw_build/$(BOARD)/system.bit
 
 FSBL_ELF = ./vitis_ws/$(BOARD)_plat/zynq_fsbl/build/fsbl.elf
-APP_ELF = ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
+# Default application ELF path (can be overridden for custom CPUs)
+APP_ELF ?= ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
 PS_INIT = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
 
 .PHONY: all hw sw boot run edit-hw sync-scripts gui program clean
@@ -30,8 +31,13 @@ sw:
         echo "❌ Error: Hardware XSA not found at $(HW_XSA). Run 'make hw' first."; \
         exit 1; \
     fi
-	@echo "🚀 Building Software for $(BOARD)..."
-	vitis -s scripts/build_sw.py $(BOARD)
+	@if [ -f sw/Makefile ]; then \
+		echo "🛠️  Detected custom software Makefile. Building..."; \
+		$(MAKE) -C sw BOARD=$(BOARD); \
+	else \
+		echo "🚀 Building Software for $(BOARD) using Vitis..."; \
+		vitis -s scripts/build_sw.py $(BOARD); \
+	fi
 
 # Generate BOOT.BIN
 boot:
