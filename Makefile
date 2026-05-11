@@ -6,6 +6,9 @@ export EXTRA_VHDL_LIBS
 # Software source directories (alternative to sw_sources.txt file)
 export USER_SW_DIRS
 
+# Custom target for the sw/Makefile (default to all)
+SW_TARGET ?= all
+
 HW_XSA = ./hw_build/$(BOARD)/system.xsa
 BIT_FILE = ./hw_build/$(BOARD)/system.bit
 
@@ -36,8 +39,8 @@ sw:
 	@echo "🚀 Ensuring Zynq Platform is ready..."
 	vitis -s scripts/build_sw.py $(BOARD)
 	@if [ -f sw/Makefile ]; then \
-		echo "🛠️  Detected custom software Makefile. Building Application..."; \
-		$(MAKE) -C sw BOARD=$(BOARD); \
+		echo "🛠️  Detected custom software Makefile. Running target: $(SW_TARGET)..."; \
+		$(MAKE) -C sw BOARD=$(BOARD) $(SW_TARGET); \
 	fi
 
 # Generate BOOT.BIN

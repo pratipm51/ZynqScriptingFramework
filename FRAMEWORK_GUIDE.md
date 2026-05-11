@@ -139,6 +139,7 @@ If you only care about the soft-CPU:
 1. Create `sw/Makefile` (see template at `sw/Makefile.neorv32`).
 2. The framework will still build a Vitis "Platform" (to handle Zynq clocks/DDR init) but will use your Makefile for the main app.
 3. Set `APP_ELF = sw/main.elf` in your project `Makefile`.
+4. **Custom Targets**: You can pass specific targets to your software Makefile using the `SW_TARGET` variable (e.g., `make sw SW_TARGET=clean`).
 
 ### Case B: Custom ARM (PS) + Custom Soft-CPU (PL)
 If you want to customize the Zynq side (e.g., for Ethernet drivers) while also running a soft-CPU:
