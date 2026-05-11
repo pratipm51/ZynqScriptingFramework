@@ -157,7 +157,20 @@ If you aren't using a soft-CPU, just put your code in `sw/` (or use `arm_sources
 
 ---
 
-## 8. Git Best Practices
+## 8. Utilities
+
+### Binary UART Uploader (`utilities/upload_bin.py`)
+A simple Python tool to upload compiled binary files to the NeoRV32 soft-CPU via its UART bootloader.
+
+**Usage:**
+```bash
+./utilities/upload_bin.py /dev/ttyUSB0 19200 sw/main.bin
+```
+*(Requires `pyserial`. Install via `pip install pyserial`)*
+
+---
+
+## 9. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**

@@ -14,6 +14,7 @@
 !vhdl_libs.txt
 !sw_sources.txt
 !arm_sources.txt
+!utilities/
 
 # 3. Whitelist specific file types
 !*.vhd
