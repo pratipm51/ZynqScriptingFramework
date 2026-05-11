@@ -32,21 +32,24 @@ else:
 
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
 
-# 2. Hybrid Application Support
-# We check for a dedicated 'arm_sources.txt' to enable custom Zynq PS software
+# 2. Hybrid Application Support (ARM Manager)
 arm_sources_file = "arm_sources.txt"
 sw_makefile_exists = os.path.exists("sw/Makefile")
 
 if os.path.exists(arm_sources_file):
     app_name = "zynq_app"
-    print(f"🚀 Creating custom Zynq ARM Application {app_name}...")
-    app = client.create_app_component(
-        name=app_name,
-        platform=platform_path,
-        domain="standalone_ps7_cortexa9_0"
-    )
+    if not os.path.exists(os.path.join(WORKSPACE, app_name)):
+        print(f"🚀 Creating custom Zynq ARM Application {app_name}...")
+        app = client.create_app_component(
+            name=app_name,
+            platform=platform_path,
+            domain="standalone_ps7_cortexa9_0"
+        )
+    else:
+        print(f"✅ ARM Application {app_name} already exists. Syncing sources...")
+        app = client.get_component(name=app_name)
     
-    # Import directories listed in arm_sources.txt
+    # Re-import to ensure latest sources are used
     with open(arm_sources_file, "r") as f:
         for line in f:
             d = line.strip()
@@ -57,17 +60,20 @@ if os.path.exists(arm_sources_file):
     print(f"🔨 Building {app_name}...")
     app.build()
 
-# 3. Fallback/Standard Vitis App (If no Soft-CPU Makefile and no arm_sources.txt)
+# 3. Fallback/Standard Vitis App (Standard ARM-only flow)
 elif not sw_makefile_exists:
     app_name = f"{board}_app"
-    print(f"🚀 Creating default Vitis Application {app_name}...")
-    app = client.create_app_component(
-        name=app_name,
-        platform=platform_path,
-        domain="standalone_ps7_cortexa9_0"
-    )
+    if not os.path.exists(os.path.join(WORKSPACE, app_name)):
+        print(f"🚀 Creating default Vitis Application {app_name}...")
+        app = client.create_app_component(
+            name=app_name,
+            platform=platform_path,
+            domain="standalone_ps7_cortexa9_0"
+        )
+    else:
+        print(f"✅ Application {app_name} already exists. Syncing sources...")
+        app = client.get_component(name=app_name)
     
-    # Default to importing the sw/ directory
     src_dir = os.path.abspath("./sw")
     if os.path.exists(src_dir):
         app.import_files(from_loc=src_dir, dest_dir_in_cmp="src")

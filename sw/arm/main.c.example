@@ -12,7 +12,7 @@ int main() {
 
     xil_printf("\r\n--- Zynq ARM PS Manager Active ---\r\n");
     xil_printf("Board: EBAZ4205 (Custom Framework)\r\n");
-    xil_printf("CPU Clock: %d Hz\r\n", XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ);
+    xil_printf("CPU Clock: %d Hz\r\n", XPAR_CPU_CORE_CLOCK_FREQ_HZ);
 
     int counter = 0;
     while(1) {
