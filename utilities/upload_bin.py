@@ -3,7 +3,7 @@ import sys
 import argparse
 import os
 import time
-import subprocess
+import threading
 
 try:
     import serial
@@ -12,76 +12,79 @@ except ImportError:
     print("Please install it using: pip install pyserial")
     sys.exit(1)
 
-def get_port_owner(device):
-    """Find the process using the serial port."""
-    try:
-        # Use fuser to find the process ID
-        result = subprocess.check_output(["fuser", device], stderr=subprocess.STDOUT)
-        pids = result.decode().strip().split()
-        return [int(p) for p in pids if p.isdigit()]
-    except:
-        return []
+def terminal_handler(ser):
+    """Handles incoming data from UART and prints to stdout."""
+    while True:
+        try:
+            if ser.in_waiting > 0:
+                data = ser.read(ser.in_waiting).decode('utf-8', errors='replace')
+                print(data, end='', flush=True)
+            time.sleep(0.01)
+        except:
+            break
 
-def main():
-    parser = argparse.ArgumentParser(description="Upload a binary file to NeoRV32 via UART.")
-    parser.add_argument("device", help="USB TTY device (e.g. /dev/ttyUSB0)")
-    parser.add_argument("baud", type=int, help="Baud rate (e.g. 19200)")
-    parser.add_argument("file", help="Path to the .bin file")
-    parser.add_argument("-f", "--force", action="store_true", help="Automatically close conflicting process (e.g. screen)")
+def upload_logic(ser, file_path):
+    """Binary upload logic that can be called interactively."""
+    if not os.path.exists(file_path):
+        print(f"\n❌ Error: File not found: {file_path}")
+        return False
+
+    file_size = os.path.getsize(file_path)
+    print(f"\n🚀 Starting binary upload: {file_path} ({file_size} bytes)...")
     
-    args = parser.parse_args()
-
-    if not os.path.exists(args.file):
-        print(f"❌ Error: File not found: {args.file}")
-        sys.exit(1)
-
-    # Check if port is busy
-    pids = get_port_owner(args.device)
-    if pids:
-        if args.force:
-            print(f"🛠️  Port {args.device} is busy (PIDs: {pids}). Closing conflicting processes...")
-            for pid in pids:
-                os.system(f"kill -9 {pid} 2>/dev/null")
-            time.sleep(1)
-        else:
-            print(f"⚠️  Warning: Port {args.device} is already in use by PID(s): {pids}")
-            print(f"   (This is likely your terminal emulator like 'screen' or 'minicom')")
-            print(f"   Close the terminal or use --force to kill it automatically.")
-            sys.exit(1)
-
-    file_size = os.path.getsize(args.file)
-    print(f"🚀 Starting upload to {args.device} ({args.baud} baud)")
-    print(f"📦 File: {args.file} ({file_size} bytes)")
-
     try:
-        # Open serial port
-        ser = serial.Serial(
-            port=args.device,
-            baudrate=args.baud,
-            bytesize=serial.EIGHTBITS,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            timeout=1
-        )
-        
-        with open(args.file, "rb") as f:
+        with open(file_path, "rb") as f:
             data = f.read()
-            
             start_time = time.time()
             ser.write(data)
             ser.flush()
             end_time = time.time()
 
         elapsed = end_time - start_time
-        print(f"✅ Upload Complete!")
-        print(f"🕒 Time taken: {elapsed:.2f} seconds")
-        print(f"📊 Avg speed: {(file_size/elapsed)/1024:.2f} KB/s")
+        print(f"\n✅ Upload Complete! ({elapsed:.2f}s, {(file_size/elapsed)/1024:.2f} KB/s)")
+        return True
+    except Exception as e:
+        print(f"\n❌ Upload failed: {e}")
+        return False
 
-        ser.close()
+def main():
+    parser = argparse.ArgumentParser(description="NeoRV32 Interactive Terminal & Uploader")
+    parser.add_argument("device", help="USB TTY device (e.g. /dev/ttyUSB0)")
+    parser.add_argument("baud", type=int, help="Baud rate (e.g. 19200)")
+    parser.add_argument("file", help="Path to the .bin file")
+    parser.add_argument("-t", "--terminal", action="store_true", help="Start in terminal mode")
+    
+    args = parser.parse_args()
 
-    except serial.SerialException as e:
-        print(f"❌ Serial Error: {e}")
-        sys.exit(1)
+    try:
+        ser = serial.Serial(port=args.device, baudrate=args.baud, timeout=0.1)
+        print(f"📡 Connected to {args.device} at {args.baud} baud.")
+        
+        if args.terminal:
+            print("⌨️  Terminal Mode Active. (Ctrl+C to exit, Ctrl+U to trigger upload)")
+            
+            # Start receiver thread
+            t = threading.Thread(target=terminal_handler, args=(ser,), daemon=True)
+            t.start()
+
+            # Main loop for keyboard input
+            while True:
+                try:
+                    # Very basic input handling for a CLI environment
+                    # In a real terminal, we would use termios for raw mode
+                    char = sys.stdin.read(1)
+                    if char == '\x15': # Ctrl+U
+                        upload_logic(ser, args.file)
+                    else:
+                        ser.write(char.encode('utf-8'))
+                except KeyboardInterrupt:
+                    print("\n👋 Exiting...")
+                    break
+        else:
+            # Standalone upload mode
+            upload_logic(ser, args.file)
+            ser.close()
+
     except Exception as e:
         print(f"❌ Error: {e}")
         sys.exit(1)
