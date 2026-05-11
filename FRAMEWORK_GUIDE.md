@@ -142,8 +142,9 @@ If you only care about the soft-CPU:
 ### Case B: Custom ARM (PS) + Custom Soft-CPU (PL)
 If you want to customize the Zynq side (e.g., for Ethernet drivers) while also running a soft-CPU:
 1. **Soft-CPU**: Define its build in `sw/Makefile` and `sw_sources.txt`.
-2. **ARM core**: Create a file named **`arm_sources.txt`** and list the directories containing your ARM C code.
-3. The framework will build **two separate ELFs** and load both of them automatically during `make run`.
+2. **ARM core**: Create a directory (e.g., **`sw/arm/`**) and list it in **`arm_sources.txt`**.
+3. **Template**: A minimal ARM manager template is available at `sw/arm/main.c.example`.
+4. The framework will build **two separate ELFs** and load both of them automatically during `make run`.
 
 ### Case C: ARM Only (Standard Zynq)
 If you aren't using a soft-CPU, just put your code in `sw/` (or use `arm_sources.txt`). The framework defaults to the standard Vitis ARM build flow.

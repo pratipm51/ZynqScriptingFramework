@@ -1,0 +1,28 @@
+#include <stdio.h>
+#include "xil_printf.h"
+#include "xparameters.h"
+#include "sleep.h"
+
+int main() {
+    /* 
+     * The Vitis Board Support Package (BSP) has already performed 
+     * the low-level CPU initialization (caches, MMU, UART setup) 
+     * before reaching this point.
+     */
+
+    xil_printf("\r\n--- Zynq ARM PS Manager Active ---\r\n");
+    xil_printf("Board: EBAZ4205 (Custom Framework)\r\n");
+    xil_printf("CPU Clock: %d Hz\r\n", XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ);
+
+    int counter = 0;
+    while(1) {
+        // This ARM core runs in parallel with your NeoRV32 Soft-CPU
+        // You can use this space to manage Ethernet, SD Card, or 
+        // Inter-Processor Communication (IPC) via shared OCM/DDR memory.
+        
+        // xil_printf("Zynq Heartbeat: %d\r\n", counter++);
+        sleep(5); 
+    }
+
+    return 0;
+}

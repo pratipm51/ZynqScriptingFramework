@@ -23,6 +23,7 @@
 !*.py
 !*.tcl
 !*.xdc
+!*.example
 !sw/Makefile*
 
 # 4. Explicitly ignore build artifacts
