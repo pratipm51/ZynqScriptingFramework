@@ -87,6 +87,14 @@ sync-scripts:
 	@echo "📝 Inside Vivado Tcl Console, run:"
 	@echo "   write_bd_tcl -force ./board_configs/$(BOARD)_bd.tcl"
 
+# Discover Zynq ARM hardware parameters and drivers
+list-arm-params:
+	@echo "🔍 Zynq Hardware Parameter Source of Truth:"
+	@find ./vitis_ws/$(BOARD)_plat/export -name "xparameters.h" | head -n 1
+	@echo ""
+	@echo "📂 Zynq Driver Include Directory:"
+	@find ./vitis_ws/$(BOARD)_plat/export -name "xil_printf.h" | xargs dirname | head -n 1
+
 gui:
 	vivado -mode gui &
 

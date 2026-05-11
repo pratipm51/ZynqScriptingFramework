@@ -65,6 +65,7 @@ Below is the complete guide to the framework's `Makefile` targets:
 | `make boot` | **Boot Image:** Uses `bootgen` to create a `BOOT.BIN` file containing the FSBL, Bitstream, and Application for SD/NAND booting. |
 | `make program` | **Flash FPGA:** Downloads *only* the Bitstream to the FPGA. (Note: Clocks will remain disabled until a software init occurs). |
 | `make edit-hw` | **GUI Editor:** Opens the Block Design in Vivado. Automatically adds the **"Sync to Framework"** button to the toolbar for easy saving. |
+| `make list-arm-params` | **Discovery:** Shows the absolute paths to the generated `xparameters.h` and driver headers for Zynq ARM development. |
 | `make load-ram` | **Maintenance:** Pushes the `BOOT.BIN` to DDR memory via JTAG at `0x08000000`. Useful for manual NAND flashing via U-Boot. |
 | `make gui` | **Vivado GUI:** Launches a standard Vivado GUI instance in the background. |
 | `make clean` | **Cleanup:** Wipes all build artifacts (`hw_build`, `vitis_ws`), temporary Vivado projects (`project_1`, `myproj`), and log files. |
