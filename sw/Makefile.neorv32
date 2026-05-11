@@ -1,23 +1,43 @@
 # --- NeoRV32 Example Makefile ---
-# This is a template for using a custom RISC-V toolchain instead of Vitis.
+# This is a template for using a custom RISC-V toolchain (C and C++) instead of Vitis.
 
 RISCV_PREFIX ?= riscv32-xilinx-elf-
 CC      = $(RISCV_PREFIX)gcc
+CXX     = $(RISCV_PREFIX)g++
 OBJCOPY = $(RISCV_PREFIX)objcopy
 SIZE    = $(RISCV_PREFIX)size
 
 # NeoRV32 specific flags (Adjust to your CPU configuration)
-MARCH  ?= rv32i_zicsr
+MARCH  ?= rv32i_zicsr_zifencei
 MABI   ?= ilp32
 
-# Compilation Flags
-CFLAGS += -march=$(MARCH) -mabi=$(MABI) -O2 -ffunction-sections -fdata-sections
-CFLAGS += -Wall -Wextra -Wstrict-prototypes
+# Common Flags
+COMMON_FLAGS = -march=$(MARCH) -mabi=$(MABI) -O2 -ffunction-sections -fdata-sections -Wall -Wextra
+CFLAGS   += $(COMMON_FLAGS) -Wstrict-prototypes
+CXXFLAGS += $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 
-# Find all sources using the same sw_sources.txt format as the main framework
+# Path to NeoRV32 common files (Linker script, startup)
+NEO_COMMON = /home/pratip/data/FPGA/neorv32/sw/common
+
+# Linker flags
+LDFLAGS += -Wl,-T,$(NEO_COMMON)/neorv32.ld -nostartfiles -Wl,--gc-sections
+# Optional: Override memory sizes if needed
+LDFLAGS += -Wl,--defsym=__neorv32_rom_size=32k -Wl,--defsym=__neorv32_ram_size=32k
+
+# Find all sources using sw_sources.txt
 SW_SOURCES_FILE = ../sw_sources.txt
-INC_DIRS = .
-SRC_FILES = $(wildcard *.c)
+INC_DIRS = . $(NEO_COMMON)
+SRC_FILES = $(wildcard *.c) $(wildcard *.cpp) $(NEO_COMMON)/crt0.S
+
+ifneq ("$(wildcard $(SW_SOURCES_FILE))","")
+    ADD_DIRS = $(shell grep -v "^\#" $(SW_SOURCES_FILE) 2>/dev/null)
+    INC_DIRS += $(ADD_DIRS)
+    SRC_FILES += $(foreach dir,$(ADD_DIRS),$(wildcard $(dir)/*.c))
+    SRC_FILES += $(foreach dir,$(ADD_DIRS),$(wildcard $(dir)/*.cpp))
+endif
+
+# Include paths
+IFLAGS = $(foreach dir,$(INC_DIRS),-I$(dir))
 
 # Target Output
 TARGET = main.elf
@@ -25,8 +45,8 @@ TARGET = main.elf
 all: $(TARGET)
 
 $(TARGET): $(SRC_FILES)
-	@echo "🔨 Compiling for NeoRV32..."
-	$(CC) $(CFLAGS) $(foreach dir,$(INC_DIRS),-I$(dir)) $^ -o $@ -Wl,--gc-sections
+	@echo "🔨 Compiling for NeoRV32 (C/C++)..."
+	$(CXX) $(CXXFLAGS) $(IFLAGS) $(SRC_FILES) -o $@ $(LDFLAGS)
 	$(SIZE) $@
 
 clean:

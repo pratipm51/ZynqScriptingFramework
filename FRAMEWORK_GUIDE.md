@@ -147,6 +147,10 @@ If you want to customize the Zynq side (e.g., for Ethernet drivers) while also r
 3. **Template**: A minimal ARM manager template is available at `sw/arm/main.c.example`.
 4. The framework will build **two separate ELFs** and load both of them automatically during `make run`.
 
+**Note on C++ Support**: 
+- **ARM side**: Vitis natively supports C++. Just add `.cpp` files to your ARM directory.
+- **Soft-CPU side**: Supported if your custom Makefile is configured for it. See the updated `sw/Makefile.neorv32` for a template that handles both C and C++ (.cpp) files.
+
 ### Case C: ARM Only (Standard Zynq)
 If you aren't using a soft-CPU, just put your code in `sw/` (or use `arm_sources.txt`). The framework defaults to the standard Vitis ARM build flow.
 
