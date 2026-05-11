@@ -13,6 +13,11 @@ proc ::sync_bd_framework {path} {
     }
 }
 
+# --- Cleanup old button names to avoid confusion ---
+if {[get_gui_custom_commands SyncFramework] != ""} {
+    remove_gui_custom_commands SyncFramework
+}
+
 # Add a Custom Button to the Toolbar
 # We use a NEW name to force Vivado to refresh the button and avoid old cached commands
 if {[get_gui_custom_commands SyncFramework_v2] != ""} {
