@@ -31,7 +31,9 @@ This framework uses a **User-First Top-Level** approach.
 
 1. **`top.vhd` (The Master)**: This is your project's absolute top-level file. You define the FPGA pins here and instantiate the Zynq system.
 2. **The System Wrapper**: When you run `make hw`, the framework generates a VHDL wrapper for your Block Design. 
-   - **Important**: In Vivado 2025.2+, the entity name may be just `system`, whereas older versions used `system_wrapper`. Use the **Port Synchronization** step below to verify the correct name for your version.
+   - **Vivado 2025.1 and earlier**: The entity name is usually **`system_wrapper`**.
+   - **Vivado 2025.2 and later**: The entity name is usually simply **`system`**.
+   - **Verification**: Use the **Port Synchronization** step below to verify the correct name for your specific Vivado version.
 3. **Naming Convention**: Your Block Design **must** be named `system` for the automation to work correctly.
 
 ---
@@ -52,7 +54,10 @@ Since every Zynq board is different, the framework does not include a default Bl
    - Update the `component` declaration in your `src/hdl/top.vhd` to match this list.
 5. **Freeze to Script**:
    - In the Vivado GUI, click the **"Sync to Framework"** button on the top toolbar.
-   - This saves the script to `board_configs/${BOARD}_bd.tcl`.
+   - **OR** run this command in the Tcl Console:
+     ```tcl
+     write_bd_tcl -force ./board_configs/${BOARD}_bd.tcl
+     ```
 
 *(Note: You do **not** need to commit the generated wrapper; the framework handles this automatically during the build phase. Each run of `make hw` or `make edit-hw` will automatically clean up any existing temporary project files to ensure a fresh environment.)*
 
