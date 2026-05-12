@@ -27,9 +27,12 @@ This framework provides a structured, version-control-friendly environment for Z
 
 ## 3. Hardware Hierarchy & Integration
 
-This framework uses a **User-First Top-Level** approach. 
+This framework strictly follows a **User-First Master Top-Level** approach. 
 
-1. **`top.vhd` (The Master)**: This is your project's absolute top-level file. You define the FPGA pins here and instantiate the Zynq system.
+1. **`top.vhd` (The Master - MANDATORY)**: 
+   - This is your project's absolute top-level file and is **required for all designs**, even if your project only contains the Zynq PS and no additional HDL logic.
+   - It acts as the permanent anchor for your physical pins (XDC constraints).
+   - You are responsible for instantiating the Zynq System (the wrapper) here.
 2. **The System Wrapper**: When you run `make hw`, the framework generates a VHDL wrapper for your Block Design. 
    - **Vivado 2025.1 and earlier**: The entity name is usually **`system_wrapper`**.
    - **Vivado 2025.2 and later**: The entity name is usually simply **`system`**.
