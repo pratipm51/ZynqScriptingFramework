@@ -12,6 +12,7 @@
 !FRAMEWORK_GUIDE.md
 !.gitignore
 !Makefile
+!project_config.mk
 !vhdl_libs.txt
 !sw_sources.txt
 !arm_sources.txt

@@ -1,0 +1,5 @@
+# project_config.mk - Project-wide settings
+# These variables will be used by the Makefile automatically.
+
+BOARD = ebaz4205
+PART  = xc7z010clg400-1

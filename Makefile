@@ -1,5 +1,9 @@
+# 1. Project-wide Configuration
+# Create a file named 'project_config.mk' to persist these values.
+-include project_config.mk
+
 BOARD ?= my_board
-PART ?= xc7z010clg400-1
+PART  ?= xc7z010clg400-1
 
 # Extra VHDL libraries (alternative to vhdl_libs.txt file)
 export EXTRA_VHDL_LIBS

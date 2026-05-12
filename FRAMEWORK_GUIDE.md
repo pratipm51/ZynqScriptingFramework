@@ -144,7 +144,21 @@ For complex designs with multiple packages and dependencies, you can control the
 
 ---
 
-## 7. Hybrid Multi-CPU Support (ARM + Soft-CPU)
+## 7. Global Configuration (`project_config.mk`)
+
+Instead of passing `BOARD` and `PART` on the command line every time, you can create a file named **`project_config.mk`** in the root of your project.
+
+**Format:**
+```make
+BOARD = ebaz4205
+PART  = xc7z010clg400-1
+```
+
+The framework will automatically read this file and use these values as the defaults for all commands.
+
+---
+
+## 8. Hybrid Multi-CPU Support (ARM + Soft-CPU)
 
 This framework supports true **Dual-CPU** development, where you can have custom code running on both the Zynq ARM core and a soft-CPU in the PL (e.g., NeoRV32).
 
