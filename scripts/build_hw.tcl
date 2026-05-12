@@ -1,13 +1,10 @@
 # scripts/build_hw.tcl - Optimized for Library and Order Support
 set board_type [lindex $argv 0]
+set part [lindex $argv 1]
 
-# 1. Hardware Definitions
-if {$board_type == "ebaz"} {
-    set part "xc7z010clg400-1"
-} elseif {$board_type == "zedboard"} {
-    set part "xc7z020clg484-1"
-} else {
-    puts "Unknown board!"; exit 1
+if {$part == ""} {
+    puts "❌ Error: No FPGA part specified. Pass it as the second argument."
+    exit 1
 }
 
 set output_dir "./hw_build/${board_type}"

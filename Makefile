@@ -1,4 +1,5 @@
 BOARD ?= my_board
+PART ?= xc7z010clg400-1
 
 # Extra VHDL libraries (alternative to vhdl_libs.txt file)
 export EXTRA_VHDL_LIBS
@@ -30,9 +31,9 @@ hw:
 		echo "   Please run 'make edit-hw' first to create your hardware design."; \
 		exit 1; \
 	fi
-	@echo "🚀 Building Hardware for $(BOARD)..."
+	@echo "🚀 Building Hardware for $(BOARD) (Part: $(PART))..."
 	rm -rf project_1 myproj clockInfo.txt
-	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD)
+	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD) $(PART)
 	rm -f *.log *.jou clockInfo.txt
 
 # Build Software
