@@ -1,30 +1,44 @@
-# Framework Setup Script for Vivado GUI (2025.2 Bulletproof)
+# Framework Setup Script for Vivado GUI (2025.2 Self-Healing)
 set board_name [lindex $argv 0]
 set script_path [file normalize "./board_configs/${board_name}_bd.tcl"]
 
-# 1. Clean up ALL previous button attempts
-foreach cmd [get_gui_custom_commands *SyncFramework*] {
-    remove_gui_custom_commands $cmd
+# --- THE SELF-HEALING REPAIR ---
+# We define sync_bd globally. Even if a stale button exists in your 
+# Vivado profile, it will now find this command and work perfectly.
+proc ::sync_bd { {path ""} } {
+    # Auto-detect path if not provided (for legacy buttons)
+    if {$path == ""} {
+        global board_name
+        set path [file normalize "./board_configs/${board_name}_bd.tcl"]
+    }
+    puts "🚀 Syncing Block Design to $path..."
+    if { [catch {write_bd_tcl -force "$path"} err] } {
+        puts "❌ Error syncing: $err"
+    } else {
+        puts "✅ Block Design successfully synced!"
+    }
 }
 
-# 2. Create a button that uses ONLY native Vivado commands
-# We avoid calling ANY custom procs here.
-create_gui_custom_command -name "SyncFramework_Final" \
-    -menu_name "Sync to Framework" \
-    -command "write_bd_tcl -force \"$script_path\"" \
-    -show_on_toolbar \
-    -description "Saves the current Block Design into the framework scripts folder"
+# --- UI REFRESH ---
+# We try to remove the old iterations, but we don't worry if they persist
+# because the ::sync_bd proc above handles them.
+catch { remove_gui_custom_commands SyncFramework }
+catch { remove_gui_custom_commands SyncFramework_v2 }
+catch { remove_gui_custom_commands SyncFramework_v3 }
 
-# 3. Add a simple procedure as a backup for the console
-proc ::sync_bd {} {
-    set board [lindex $::argv 0]
-    write_bd_tcl -force [file normalize "./board_configs/${board}_bd.tcl"]
+# Create the official modern button
+if {[get_gui_custom_commands SyncFramework_Final] == ""} {
+    create_gui_custom_command -name "SyncFramework_Final" \
+        -menu_name "Sync to Framework" \
+        -command "::sync_bd" \
+        -show_on_toolbar \
+        -description "Saves the current Block Design into the framework scripts folder"
 }
 
-puts "--- Framework 2025.2 Active ---"
-puts "  Target: $script_path"
 # Load the actual Block Design script
 set bd_script "./board_configs/${board_name}_bd.tcl"
 if {[file exists $bd_script]} {
     source $bd_script
 }
+
+puts "✅ Framework Active: Use the 'Sync to Framework' button or type 'sync_bd'."
