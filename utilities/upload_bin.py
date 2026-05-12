@@ -26,7 +26,7 @@ def terminal_handler(ser):
             break
 
 def upload_logic(ser, file_path):
-    """Binary upload logic with progress indicator."""
+    """Binary upload logic with throttling to prevent FIFO overflow."""
     if not os.path.exists(file_path):
         print(f"\r\n❌ Error: File not found: {file_path}")
         return False
@@ -39,17 +39,24 @@ def upload_logic(ser, file_path):
             data = f.read()
             start_time = time.time()
             
-            chunk_size = 1024
+            # Throttling: NeoRV32 UART FIFO is typically 64 bytes.
+            # Using smaller chunks and a small delay ensures no data is lost.
+            chunk_size = 32 
             sent = 0
             for i in range(0, len(data), chunk_size):
                 chunk = data[i:i+chunk_size]
                 ser.write(chunk)
+                ser.flush() # Ensure it's physically sent
                 sent += len(chunk)
+                
+                # Small delay between chunks (approx 2ms)
+                # At 19200, 32 bytes take ~16ms to transmit. 2ms is plenty for CPU.
+                time.sleep(0.002)
+
                 # Print progress
                 percent = (sent / file_size) * 100
                 print(f"\r📤 Progress: {percent:3.0f}% [{sent}/{file_size} bytes]", end="", flush=True)
             
-            ser.flush()
             end_time = time.time()
 
         elapsed = end_time - start_time
