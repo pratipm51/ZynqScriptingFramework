@@ -27,7 +27,7 @@ all: hw sw
 hw:
 	@if [ ! -f board_configs/$(BOARD)_bd.tcl ]; then \
 		echo "❌ Error: Board configuration not found at board_configs/$(BOARD)_bd.tcl"; \
-		echo "   Run 'make edit-hw to create one, or copy an example from board_configs/."; \
+		echo "   Please run 'make edit-hw' first to create your hardware design."; \
 		exit 1; \
 	fi
 	@echo "🚀 Building Hardware for $(BOARD)..."
@@ -82,17 +82,13 @@ run:
 
 # GUI Workflow: Open for editing
 edit-hw:
-	@if [ ! -f board_configs/$(BOARD)_bd.tcl ]; then \
-		echo "❌ Error: Board configuration not found at board_configs/$(BOARD)_bd.tcl"; \
-		echo "   Run 'make edit-hw to create one, or copy an example from board_configs/."; \
-		exit 1; \
-	fi
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
 	rm -rf project_1 myproj clockInfo.txt
 	@if [ -f board_configs/$(BOARD)_bd.tcl ]; then \
 		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD); \
 	else \
-		vivado; \
+		echo "ℹ️ No configuration found. Opening blank Vivado instance for $(BOARD)..."; \
+		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD); \
 	fi
 
 # Reminder for the user
