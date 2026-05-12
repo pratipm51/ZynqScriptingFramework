@@ -1,43 +1,28 @@
-# Framework Setup Script for Vivado GUI (2025.2 Compatibility)
+# Framework Setup Script for Vivado GUI (2025.2 Bulletproof)
 set board_name [lindex $argv 0]
 set script_path [file normalize "./board_configs/${board_name}_bd.tcl"]
 
-# --- COMPATIBILITY FIX ---
-# The user has a stale button calling 'sync_bd'. 
-# We define it globally to make that button work again.
-proc ::sync_bd {} {
-    set path [file normalize "./board_configs/[lindex $::argv 0]_bd.tcl"]
-    puts "🚀 Syncing Block Design to $path..."
-    if { [catch {write_bd_tcl -force "$path"} err] } {
-        puts "❌ Error: $err"
-    } else {
-        puts "✅ Block Design successfully synced!"
-    }
-}
-
-# --- AGGRESSIVE CLEANUP ---
-# Remove all known previous iterations of the button
+# 1. Clean up ALL previous button attempts
 foreach cmd [get_gui_custom_commands *SyncFramework*] {
     remove_gui_custom_commands $cmd
 }
-if {[get_gui_custom_commands sync_bd] != ""} {
-    remove_gui_custom_commands sync_bd
-}
 
-# Create a fresh, clean button
-create_gui_custom_command -name "SyncFramework_v4" \
+# 2. Create a button that uses ONLY native Vivado commands
+# We avoid calling ANY custom procs here.
+create_gui_custom_command -name "SyncFramework_Final" \
     -menu_name "Sync to Framework" \
-    -command "::sync_bd" \
+    -command "write_bd_tcl -force \"$script_path\"" \
     -show_on_toolbar \
     -description "Saves the current Block Design into the framework scripts folder"
 
-# Add a backup alias
-interp alias {} sync {} ::sync_bd
+# 3. Add a simple procedure as a backup for the console
+proc ::sync_bd {} {
+    set board [lindex $::argv 0]
+    write_bd_tcl -force [file normalize "./board_configs/${board}_bd.tcl"]
+}
 
-puts "--- Framework Active ---"
-puts "  - Click 'Sync to Framework' button to save design."
-puts "  - You can also type 'sync' or 'sync_bd' in the Tcl Console."
-
+puts "--- Framework 2025.2 Active ---"
+puts "  Target: $script_path"
 # Load the actual Block Design script
 set bd_script "./board_configs/${board_name}_bd.tcl"
 if {[file exists $bd_script]} {
