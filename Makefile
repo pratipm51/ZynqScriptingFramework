@@ -1,4 +1,4 @@
-BOARD ?= ebaz
+BOARD ?= my_board
 
 # Extra VHDL libraries (alternative to vhdl_libs.txt file)
 export EXTRA_VHDL_LIBS
@@ -25,6 +25,11 @@ all: hw sw
 
 # Build Hardware
 hw:
+	@if [ ! -f board_configs/$(BOARD)_bd.tcl ]; then \
+		echo "❌ Error: Board configuration not found at board_configs/$(BOARD)_bd.tcl"; \
+		echo "   Run 'make edit-hw to create one, or copy an example from board_configs/."; \
+		exit 1; \
+	fi
 	@echo "🚀 Building Hardware for $(BOARD)..."
 	rm -rf project_1 myproj clockInfo.txt
 	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD)
@@ -77,6 +82,11 @@ run:
 
 # GUI Workflow: Open for editing
 edit-hw:
+	@if [ ! -f board_configs/$(BOARD)_bd.tcl ]; then \
+		echo "❌ Error: Board configuration not found at board_configs/$(BOARD)_bd.tcl"; \
+		echo "   Run 'make edit-hw to create one, or copy an example from board_configs/."; \
+		exit 1; \
+	fi
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
 	rm -rf project_1 myproj clockInfo.txt
 	@if [ -f board_configs/$(BOARD)_bd.tcl ]; then \

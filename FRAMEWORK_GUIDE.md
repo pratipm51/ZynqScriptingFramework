@@ -14,9 +14,10 @@ This framework provides a structured, version-control-friendly environment for Z
 ├── src/
 │   ├── hdl/       <-- Your VHDL files (*.vhd, *.vhdl)
 │   └── constr/    <-- Physical constraints (*.xdc)
-├── sw/            <-- C application source code (*.c, *.h)
+├── sw/            <-- Software source code
 ├── board_configs/ <-- Your Block Design scripts (*_bd.tcl)
 ├── scripts/       <-- The framework engine (Automation scripts)
+├── utilities/     <-- Standalone tools (Uploader, etc.)
 ├── docs/          <-- Design documentation
 ├── Makefile       <-- The framework command center
 └── .gitignore     <-- Whitelist-based filter for Git
@@ -28,28 +29,31 @@ This framework provides a structured, version-control-friendly environment for Z
 
 This framework uses a **User-First Top-Level** approach. 
 
-1. **`top.vhd` (The Master)**: This is your project's absolute top-level file. You are responsible for defining the FPGA pins here and instantiating both your custom logic and the Zynq system.
-2. **`system_wrapper` (The Zynq PS)**: When you run `make hw`, the framework generates a VHDL wrapper for your Block Design (named `system`). You must instantiate this component inside your `top.vhd`.
-3. **Your Logic**: You can instantiate your own VHDL modules (like NeoRV32) alongside the Zynq wrapper, connecting them via signals.
-
-**Key Requirement**: Your Block Design **must** be named `system` for the automation to correctly generate the `system_wrapper` component that `top.vhd` expects.
+1. **`top.vhd` (The Master)**: This is your project's absolute top-level file. You define the FPGA pins here and instantiate the Zynq system.
+2. **The System Wrapper**: When you run `make hw`, the framework generates a VHDL wrapper for your Block Design. 
+   - **Important**: In Vivado 2025.2+, the entity name may be just `system`, whereas older versions used `system_wrapper`. Use the **Port Synchronization** step below to verify the correct name for your version.
+3. **Naming Convention**: Your Block Design **must** be named `system` for the automation to work correctly.
 
 ---
 
 ## 4. The Two-Phase Workflow
 
 ### Phase 1: The Initialization (GUI Required)
-1. **Reconstruct/Open**: Run `make edit-hw`.
+
+Since every Zynq board is different, the framework does not include a default Block Design. Follow these steps to initialize your project:
+
+1. **Construct/Open**: Run `make edit-hw`.
 2. **Create Design**: Create a Block Design named **`system`**.
 3. **Configure**: Add the **Zynq7 Processing System** IP. Run "Block Automation" (which applies board-specific presets if available).
-4. **Port Synchronization (Important for New Boards)**:
+4. **Port Synchronization**:
    - To ensure your `top.vhd` matches your hardware:
    - In the Sources tab, right-click `system.bd` and select **"Create HDL Wrapper"**.
-   - Open the generated `system_wrapper.vhd` and copy its port list.
-   - Update the `component system_wrapper` declaration in your `src/hdl/top.vhd` to match this list.
+   - Open the generated `system_wrapper.vhd` (or `system.vhd`) and copy its port list.
+   - Update the `component` declaration in your `src/hdl/top.vhd` to match this list.
 5. **Freeze to Script**:
-   - In the Vivado GUI, simply click the new **"Sync to Framework"** button on the top toolbar.
-   - Alternatively, you can still run `write_bd_tcl -force ./scripts/ebaz_bd.tcl` in the Tcl Console.
+   - In the Vivado GUI, click the **"Sync to Framework"** button on the top toolbar.
+   - This saves the script to `board_configs/${BOARD}_bd.tcl`.
+
 *(Note: You do **not** need to commit the generated wrapper; the framework handles this automatically during the build phase. Each run of `make hw` or `make edit-hw` will automatically clean up any existing temporary project files to ensure a fresh environment.)*
 
 ### Phase 2: The Development Loop (CLI)
@@ -77,6 +81,8 @@ Below is the complete guide to the framework's `Makefile` targets:
 If your VHDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will not run** by simply flashing the bitstream with `make program`. 
 
 **The Zynq PS clocks are disabled by default on power-up.** You must run `make run` to execute the PS initialization (via `ps7_init.tcl`), which enables the clocks and resets the PL logic.
+
+---
 
 ## 6. Advanced Features
 

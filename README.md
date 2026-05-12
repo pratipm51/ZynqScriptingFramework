@@ -47,7 +47,8 @@ A professional, version-control-friendly workflow for Xilinx Zynq-7000 SoC devel
 ### 2. Initialization
 1. Clone the repository.
 2. Run `make edit-hw` to configure your Zynq Block Design.
-3. Click the **"Sync to Framework"** button in Vivado.
+3. Use the **Port Synchronization** steps in `FRAMEWORK_GUIDE.md` to create your `top.vhd` from the templates.
+4. Click the **"Sync to Framework"** button in Vivado.
 
 ### 3. Build & Run
 ```bash

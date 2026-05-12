@@ -4,6 +4,7 @@
 
 # 2. Whitelist your core folders
 !src/
+!board_configs/
 !scripts/
 !docs/
 !sw/

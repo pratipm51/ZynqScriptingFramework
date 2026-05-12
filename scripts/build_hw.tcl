@@ -88,15 +88,16 @@ read_xdc "./src/constr/${board_type}.xdc"
 
 # --- Auto-Detect Block Design ---
 if {[file exists $bd_script]} {
-    puts "📝 Found BD script for $board_type. Sourcing..."
+    puts "📝 Sourcing Board Configuration: $bd_script"
     source $bd_script
     set bd_file [get_files *.bd]
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
+    puts "📦 Generated Wrapper: $wrapper_file"
     add_files -norecurse $wrapper_file
     set top_module "top"
 } else {
-    puts "ℹ️ No BD script found. Using pure HDL flow."
+    puts "ℹ️ No board configuration found. Using pure HDL flow with top module: 'top'"
     set top_module "top"
 }
 
