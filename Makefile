@@ -42,6 +42,8 @@ help:
 	@echo "  make boot            - Packages FSBL, Bitstream, and App into BOOT.BIN"
 	@echo "  make program         - Downloads the Bitstream only to the PL (no software init)"
 	@echo "  make edit-hw         - Opens the Block Design in Vivado GUI with Auto-Sync button"
+	@echo "  make edit-sw         - Opens Vitis Unified IDE for interactive development/testing"
+	@echo "  make sync-sw         - Harvests source changes from Vitis GUI back to the framework"
 	@echo "  make list-arm-params - Shows paths to generated xparameters.h and driver headers"
 	@echo "  make load-ram        - Pushes BOOT.BIN to DDR (0x08000000) for manual NAND flashing"
 	@echo "  make gui             - Launches a standard Vivado GUI instance"
@@ -79,6 +81,15 @@ sw:
 		echo "🛠️  Detected custom software Makefile. Running target: $(SW_TARGET)..."; \
 		$(MAKE) -C sw BOARD=$(BOARD) $(SW_TARGET); \
 	fi
+
+# GUI Workflow: Open Vitis for interactive development
+edit-sw: sw
+	@echo "🛠️ Opening Vitis Unified IDE for $(BOARD)..."
+	vitis -w ./vitis_ws &
+
+# Harvest changes from Vitis GUI back to the framework sources
+sync-sw:
+	@python3 scripts/sync_sw.py
 
 # Generate BOOT.BIN
 boot:
