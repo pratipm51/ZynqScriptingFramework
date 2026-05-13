@@ -33,10 +33,10 @@ This framework strictly follows a **User-First Master Top-Level** approach.
    - This is your project's absolute top-level file and is **required for all designs**.
    - It acts as the permanent anchor for your physical pins (XDC constraints).
    - **Auto-Bootstrap**: If this file is missing when you click "Sync to Framework" in Vivado, the framework will **automatically create it** for you, pre-filled with the correct Zynq ports.
-2. **The System Wrapper**: When you run `make hw`, the framework generates a VHDL wrapper for your Block Design. 
-   - **Vivado 2025.1 and earlier**: The entity name is usually **`system_wrapper`**.
-   - **Vivado 2025.2 and later**: The entity name is usually simply **`system`**.
-   - **Verification**: Use the **Port Synchronization** step below to verify the correct name for your specific Vivado version.
+2. **The System Wrapper (Instantiated Logic)**: 
+   - When you run `make hw`, the framework automatically generates a VHDL wrapper for your Block Design (named `system.bd`).
+   - The bootstrapped `top.vhd` is pre-configured to instantiate this wrapper.
+   - **Versioning Note**: The framework automatically detects the correct entity name for your version (typically `system` in 2025.2+, or `system_wrapper` in older versions) during the bootstrapping process.
 3. **Naming Convention**: Your Block Design **must** be named `system` for the automation to work correctly.
 
 ---
