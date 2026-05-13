@@ -89,6 +89,11 @@ read_xdc "./src/constr/${board_type}.xdc"
 if {[file exists $bd_script]} {
     puts "📝 Sourcing Board Configuration: $bd_script"
     source $bd_script
+    
+    # --- FORCE LANGUAGE OVERRIDE ---
+    # We do this AFTER sourcing because the BD script often has a hardcoded language
+    set_property target_language $target_lang [current_project]
+    
     set bd_file [get_files *.bd]
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
