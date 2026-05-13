@@ -25,9 +25,35 @@ APP_ELF ?= ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
 ZYNQ_ELF = ./vitis_ws/zynq_app/build/zynq_app.elf
 PS_INIT = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
 
-.PHONY: all hw sw boot run edit-hw sync-scripts gui program clean
+.DEFAULT_GOAL := help
 
-all: hw sw
+# 1. Project-wide Configuration
+# ... (rest of config)
+
+# --- Help System ---
+help:
+	@echo "🚀 ZynqScriptingFramework: The Script-First Workflow"
+	@echo ""
+	@echo "Available Targets:"
+	@echo "  make hw              - Synthesize VHDL, implement design, and generate Bitstream"
+	@echo "  make sw              - Build Zynq ARM Platform and all Application ELFs"
+	@echo "  make all             - Full Build: Hardware + Software"
+	@echo "  make run             - Performs PS7 Init, Flashes Bitstream, and executes ELFs via JTAG"
+	@echo "  make boot            - Packages FSBL, Bitstream, and App into BOOT.BIN"
+	@echo "  make program         - Downloads the Bitstream only to the PL (no software init)"
+	@echo "  make edit-hw         - Opens the Block Design in Vivado GUI with Auto-Sync button"
+	@echo "  make list-arm-params - Shows paths to generated xparameters.h and driver headers"
+	@echo "  make load-ram        - Pushes BOOT.BIN to DDR (0x08000000) for manual NAND flashing"
+	@echo "  make gui             - Launches a standard Vivado GUI instance"
+	@echo "  make clean           - Wipes all build artifacts, temporary projects, and log files"
+	@echo ""
+	@echo "Current Project Settings (from project_config.mk):"
+	@echo "  BOARD:           $(BOARD)"
+	@echo "  PART:            $(PART)"
+	@echo "  TARGET_LANGUAGE: $(TARGET_LANGUAGE)"
+	@echo ""
+
+.PHONY: all hw sw boot run edit-hw sync-scripts gui program clean help
 
 # Build Hardware
 hw:
