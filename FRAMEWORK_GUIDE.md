@@ -30,9 +30,9 @@ This framework provides a structured, version-control-friendly environment for Z
 This framework strictly follows a **User-First Master Top-Level** approach. 
 
 1. **`top.vhd` (The Master - MANDATORY)**: 
-   - This is your project's absolute top-level file and is **required for all designs**, even if your project only contains the Zynq PS and no additional HDL logic.
+   - This is your project's absolute top-level file and is **required for all designs**.
    - It acts as the permanent anchor for your physical pins (XDC constraints).
-   - You are responsible for instantiating the Zynq System (the wrapper) here.
+   - **Auto-Bootstrap**: If this file is missing when you click "Sync to Framework" in Vivado, the framework will **automatically create it** for you, pre-filled with the correct Zynq ports.
 2. **The System Wrapper**: When you run `make hw`, the framework generates a VHDL wrapper for your Block Design. 
    - **Vivado 2025.1 and earlier**: The entity name is usually **`system_wrapper`**.
    - **Vivado 2025.2 and later**: The entity name is usually simply **`system`**.
@@ -50,13 +50,11 @@ Since every Zynq board is different, the framework does not include a default Bl
 1. **Construct/Open**: Run `make edit-hw`.
 2. **Create Design**: Create a Block Design named **`system`**.
 3. **Configure**: Add the **Zynq7 Processing System** IP. Run "Block Automation" (which applies board-specific presets if available).
-4. **Port Synchronization**:
-   - To ensure your `top.vhd` matches your hardware:
-   - In the Sources tab, right-click `system.bd` and select **"Create HDL Wrapper"**.
-   - Open the generated `system_wrapper.vhd` (or `system.vhd`) and copy its port list.
-   - Update the `component` declaration in your `src/hdl/top.vhd` to match this list.
+4. **Port Synchronization (Auto-Bootstrap)**:
+   - For **new projects**: Simply click the **"Sync to Framework"** button on the top toolbar. The framework will automatically create `src/hdl/top.vhd` for you with the correct ports.
+   - For **existing projects**: If you change ports in the Block Design, you must manually update the `component` declaration in your `src/hdl/top.vhd` to match. (Right-click `system.bd` -> "Create HDL Wrapper" to see the updated port list).
 5. **Freeze to Script**:
-   - In the Vivado GUI, click the **"Sync to Framework"** button on the top toolbar.
+   - The "Sync to Framework" button also saves your Block Design to `board_configs/${BOARD}_bd.tcl`.
    - **OR** run this command in the Tcl Console:
      ```tcl
      write_bd_tcl -force ./board_configs/${BOARD}_bd.tcl
