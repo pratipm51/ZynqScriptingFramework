@@ -1,6 +1,7 @@
 # scripts/build_hw.tcl - Optimized for Library and Order Support
 set board_type [lindex $argv 0]
 set part [lindex $argv 1]
+set target_lang [lindex $argv 2]
 
 if {$part == ""} {
     puts "❌ Error: No FPGA part specified. Pass it as the second argument."
@@ -50,6 +51,7 @@ proc read_vhdl_ordered {lib_name path} {
 
 # 2. Build Flow
 create_project -in_memory -part $part
+set_property target_language $target_lang [current_project]
 
 # --- Handle Extra VHDL Libraries from vhdl_libs.txt or environment ---
 set libs_file "vhdl_libs.txt"

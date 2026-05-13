@@ -4,6 +4,7 @@
 
 BOARD ?= my_board
 PART  ?= xc7z010clg400-1
+TARGET_LANGUAGE ?= VHDL
 
 # Extra VHDL libraries (alternative to vhdl_libs.txt file)
 export EXTRA_VHDL_LIBS
@@ -37,7 +38,7 @@ hw:
 	fi
 	@echo "🚀 Building Hardware for $(BOARD) (Part: $(PART))..."
 	rm -rf project_1 myproj clockInfo.txt
-	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD) $(PART)
+	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD) $(PART) $(TARGET_LANGUAGE)
 	rm -f *.log *.jou clockInfo.txt
 
 # Build Software
@@ -90,10 +91,10 @@ edit-hw:
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
 	rm -rf project_1 myproj clockInfo.txt
 	@if [ -f board_configs/$(BOARD)_bd.tcl ]; then \
-		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD); \
+		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD) $(TARGET_LANGUAGE); \
 	else \
 		echo "ℹ️ No configuration found. Opening blank Vivado instance for $(BOARD)..."; \
-		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD); \
+		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD) $(TARGET_LANGUAGE); \
 	fi
 
 # Reminder for the user

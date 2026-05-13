@@ -1,5 +1,7 @@
 # Framework Setup Script for Vivado GUI (2025.2 Self-Healing)
 set board_name [lindex $argv 0]
+set target_lang [lindex $argv 1]
+if {$target_lang == ""} { set target_lang "VHDL" }
 set script_path [file normalize "./board_configs/${board_name}_bd.tcl"]
 
 # --- THE SELF-HEALING REPAIR ---
@@ -34,6 +36,10 @@ if {[get_gui_custom_commands SyncFramework_Final] == ""} {
         -show_on_toolbar \
         -description "Saves the current Block Design into the framework scripts folder"
 }
+
+# Force target language settings
+set_property target_language $target_lang [current_project]
+set_property simulator_language Mixed [current_project]
 
 # Load the actual Block Design script
 set bd_script "./board_configs/${board_name}_bd.tcl"

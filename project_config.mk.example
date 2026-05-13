@@ -3,3 +3,6 @@
 
 BOARD = ebaz4205
 PART  = xc7z010clg400-1
+
+# Target language for project and generated wrappers (VHDL or Verilog)
+TARGET_LANGUAGE = VHDL
