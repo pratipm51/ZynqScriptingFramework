@@ -6,3 +6,6 @@ PART  = xc7z010clg400-1
 
 # Target language for project and generated wrappers (VHDL or Verilog)
 TARGET_LANGUAGE = VHDL
+
+# Active application component name
+APP = zynq_app
