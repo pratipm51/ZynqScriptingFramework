@@ -44,10 +44,10 @@ help:
 	@echo "  make boot            - Packages FSBL, Bitstream, and App into BOOT.BIN"
 	@echo "  make program         - Downloads the Bitstream only to the PL (no software init)"
 	@echo "  make edit-hw         - Opens the Block Design in Vivado GUI with Auto-Sync button"
-	make edit-sw         - Opens Vitis Unified IDE for interactive development/testing
-	make sync-sw         - Harvests source changes from Vitis GUI back to the framework
-	make delete-sw       - Removes application sources and Vitis workspace artifacts
-	make list-arm-params - Shows paths to generated xparameters.h and driver headers
+	@echo "  make edit-sw         - Opens Vitis Unified IDE for interactive development/testing"
+	@echo "  make sync-sw         - Harvests source changes from Vitis GUI back to the framework"
+	@echo "  make delete-sw       - Removes application sources and Vitis workspace artifacts"
+	@echo "  make list-arm-params - Shows paths to generated xparameters.h and driver headers"
 
 	@echo "  make load-ram        - Pushes BOOT.BIN to DDR (0x08000000) for manual NAND flashing"
 	@echo "  make gui             - Launches a standard Vivado GUI instance"
