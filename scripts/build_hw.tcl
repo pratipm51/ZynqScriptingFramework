@@ -94,7 +94,8 @@ if {[file exists $bd_script]} {
     # We do this AFTER sourcing because the BD script often has a hardcoded language
     set_property target_language $target_lang [current_project]
     
-    set bd_file [get_files *.bd]
+    # Target only the top-level system.bd to avoid nested BD errors (e.g. SmartConnect)
+    set bd_file [get_files system.bd]
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
     puts "📦 Generated Wrapper: $wrapper_file"
