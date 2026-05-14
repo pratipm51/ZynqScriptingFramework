@@ -44,9 +44,11 @@ help:
 	@echo "  make boot            - Packages FSBL, Bitstream, and App into BOOT.BIN"
 	@echo "  make program         - Downloads the Bitstream only to the PL (no software init)"
 	@echo "  make edit-hw         - Opens the Block Design in Vivado GUI with Auto-Sync button"
-	@echo "  make edit-sw         - Opens Vitis Unified IDE for interactive development/testing"
-	@echo "  make sync-sw         - Harvests source changes from Vitis GUI back to the framework"
-	@echo "  make list-arm-params - Shows paths to generated xparameters.h and driver headers"
+	make edit-sw         - Opens Vitis Unified IDE for interactive development/testing
+	make sync-sw         - Harvests source changes from Vitis GUI back to the framework
+	make delete-sw       - Removes application sources and Vitis workspace artifacts
+	make list-arm-params - Shows paths to generated xparameters.h and driver headers
+
 	@echo "  make load-ram        - Pushes BOOT.BIN to DDR (0x08000000) for manual NAND flashing"
 	@echo "  make gui             - Launches a standard Vivado GUI instance"
 	@echo "  make clean           - Wipes all build artifacts, temporary projects, and log files"
@@ -93,6 +95,17 @@ edit-sw: sw
 # Harvest changes from Vitis GUI back to the framework sources
 sync-sw:
 	@python3 scripts/sync_sw.py $(APP)
+
+# Safely delete a software application
+delete-sw:
+	@echo "🗑️  Deleting application '$(APP)'..."
+	@if [ "$(APP)" = "zynq_app" ] && [ -d sw/arm ]; then \
+		rm -rf sw/arm; \
+	elif [ -d sw/$(APP) ]; then \
+		rm -rf sw/$(APP); \
+	fi
+	@rm -rf vitis_ws/$(APP)
+	@echo "✅ Application '$(APP)' removed from framework and workspace."
 
 # Generate BOOT.BIN
 boot:
