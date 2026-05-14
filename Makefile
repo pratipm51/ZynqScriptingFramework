@@ -5,6 +5,8 @@
 BOARD ?= my_board
 PART  ?= xc7z010clg400-1
 TARGET_LANGUAGE ?= VHDL
+# Active application component name (default: zynq_app)
+APP ?= zynq_app
 
 # Extra VHDL libraries (alternative to vhdl_libs.txt file)
 export EXTRA_VHDL_LIBS
@@ -21,8 +23,8 @@ BIT_FILE = ./hw_build/$(BOARD)/system.bit
 FSBL_ELF = ./vitis_ws/$(BOARD)_plat/zynq_fsbl/build/fsbl.elf
 # Default application ELF path (can be overridden for custom CPUs)
 APP_ELF ?= ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
-# Zynq PS-side application (Active if arm_sources.txt exists)
-ZYNQ_ELF = ./vitis_ws/zynq_app/build/zynq_app.elf
+# Zynq PS-side application (Active if arm_sources.txt or APP directory exists)
+ZYNQ_ELF = ./vitis_ws/$(APP)/build/$(APP).elf
 PS_INIT = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
 
 .DEFAULT_GOAL := help
@@ -53,6 +55,7 @@ help:
 	@echo "  BOARD:           $(BOARD)"
 	@echo "  PART:            $(PART)"
 	@echo "  TARGET_LANGUAGE: $(TARGET_LANGUAGE)"
+	@echo "  ACTIVE APP:      $(APP)"
 	@echo ""
 
 .PHONY: all hw sw boot run edit-hw sync-scripts gui program clean help
@@ -75,8 +78,8 @@ sw:
         echo "❌ Error: Hardware XSA not found at $(HW_XSA). Run 'make hw' first."; \
         exit 1; \
     fi
-	@echo "🚀 Ensuring Zynq Platform is ready..."
-	vitis -s scripts/build_sw.py $(BOARD)
+	@echo "🚀 Ensuring Zynq Platform and Application '$(APP)' are ready..."
+	vitis -s scripts/build_sw.py $(BOARD) $(APP)
 	@if [ -f sw/Makefile ]; then \
 		echo "🛠️  Detected custom software Makefile. Running target: $(SW_TARGET)..."; \
 		$(MAKE) -C sw BOARD=$(BOARD) $(SW_TARGET); \
@@ -89,7 +92,7 @@ edit-sw: sw
 
 # Harvest changes from Vitis GUI back to the framework sources
 sync-sw:
-	@python3 scripts/sync_sw.py
+	@python3 scripts/sync_sw.py $(APP)
 
 # Generate BOOT.BIN
 boot:

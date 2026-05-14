@@ -2,10 +2,10 @@ import vitis
 import sys
 import os
 import time
-import shutil
 
-# Get board name from Makefile
+# Arguments from Makefile: board, app_name
 board = sys.argv[1] if len(sys.argv) > 1 else "ebaz"
+app_name = sys.argv[2] if len(sys.argv) > 2 else "zynq_app"
 
 XSA_PATH = os.path.abspath(f"./hw_build/{board}/system.xsa")
 WORKSPACE = os.path.abspath(f"./vitis_ws")
@@ -32,39 +32,32 @@ else:
 
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
 
-# 2. Hybrid Application Support (ARM Manager)
-arm_sources_file = "arm_sources.txt"
-sw_makefile_exists = os.path.exists("sw/Makefile")
+# 2. Determine Source Directory for Application
+# Priority: 
+# 1. sw/<app_name> directory
+# 2. Paths in arm_sources.txt (if app_name is default 'zynq_app')
+# 3. Default sw/ directory
 
-if os.path.exists(arm_sources_file):
-    app_name = "zynq_app"
-    if not os.path.exists(os.path.join(WORKSPACE, app_name)):
-        print(f"🚀 Creating custom Zynq ARM Application {app_name}...")
-        app = client.create_app_component(
-            name=app_name,
-            platform=platform_path,
-            domain="standalone_ps7_cortexa9_0"
-        )
-    else:
-        print(f"✅ ARM Application {app_name} already exists. Syncing sources...")
-        app = client.get_component(name=app_name)
-    
-    # Re-import to ensure latest sources are used
-    with open(arm_sources_file, "r") as f:
+src_dirs = []
+app_dir = os.path.join("sw", app_name)
+
+if os.path.exists(app_dir):
+    src_dirs.append(os.path.abspath(app_dir))
+elif app_name == "zynq_app" and os.path.exists("arm_sources.txt"):
+    with open("arm_sources.txt", "r") as f:
         for line in f:
             d = line.strip()
             if d and not d.startswith("#") and os.path.exists(d):
-                print(f"   -> Importing ARM sources from {d}")
-                app.import_files(from_loc=os.path.abspath(d), dest_dir_in_cmp="src")
-    
-    print(f"🔨 Building {app_name}...")
-    app.build()
+                src_dirs.append(os.path.abspath(d))
+else:
+    # Fallback to standard sw/ directory
+    if os.path.exists("sw"):
+        src_dirs.append(os.path.abspath("sw"))
 
-# 3. Fallback/Standard Vitis App (Standard ARM-only flow)
-elif not sw_makefile_exists:
-    app_name = f"{board}_app"
+# 3. Create and Build Application
+if src_dirs:
     if not os.path.exists(os.path.join(WORKSPACE, app_name)):
-        print(f"🚀 Creating default Vitis Application {app_name}...")
+        print(f"🚀 Creating Vitis Application {app_name}...")
         app = client.create_app_component(
             name=app_name,
             platform=platform_path,
@@ -74,14 +67,14 @@ elif not sw_makefile_exists:
         print(f"✅ Application {app_name} already exists. Syncing sources...")
         app = client.get_component(name=app_name)
     
-    src_dir = os.path.abspath("./sw")
-    if os.path.exists(src_dir):
-        app.import_files(from_loc=src_dir, dest_dir_in_cmp="src")
+    # Import all source directories
+    for d in src_dirs:
+        print(f"   -> Importing sources from {d}")
+        app.import_files(from_loc=d, dest_dir_in_cmp="src")
     
     print(f"🔨 Building {app_name}...")
     app.build()
-
 else:
-    print("ℹ️ Custom Soft-CPU detected via sw/Makefile. Skipping Vitis ARM app unless arm_sources.txt is provided.")
+    print(f"⚠️  No source directories found for application {app_name}. Skipping build.")
 
 print("✅ Vitis Build Process Complete!")
