@@ -73,7 +73,8 @@ Below is the complete guide to the framework's `Makefile` targets:
 | `make edit-sw` | **Vitis IDE:** Opens the Vitis Unified IDE for interactive development and testing. Changes made here must be synced back using `make sync-sw`. |
 | `make sync-sw` | **Export:** Harvests files created/modified in the Vitis GUI and copies them back to the framework's `sw/` folders for version control. |
 | `make delete-sw` | **Cleanup:** Removes the specified application sources and its corresponding Vitis workspace component. |
-| `make` | **Full Build:** Shortcut for `make hw` followed by `make sw`. |
+| `make all` | **Full Build:** Shortcut for `make hw` followed by `make sw`. |
+| `make` | **Help:** Shows the interactive command menu and current project settings. |
 | `make run` | **JTAG Execution:** The primary "Test" command. Performs a full PS7 initialization (enables clocks), downloads the Bitstream and ELF, and starts execution. |
 | `make boot` | **Boot Image:** Uses `bootgen` to create a `BOOT.BIN` file containing the FSBL, Bitstream, and Application for SD/NAND booting. |
 | `make program` | **Flash FPGA:** Downloads *only* the Bitstream to the FPGA. (Note: Clocks will remain disabled until a software init occurs). |
