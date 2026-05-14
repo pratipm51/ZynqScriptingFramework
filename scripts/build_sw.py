@@ -36,13 +36,18 @@ platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_
 # Priority: 
 # 1. sw/<app_name> directory
 # 2. Paths in arm_sources.txt (if app_name is default 'zynq_app')
-# 3. Default sw/ directory
+# 3. Default sw/ directory (legacy support)
 
 src_dirs = []
 app_dir = os.path.join("sw", app_name)
 
+# Legacy check for zynq_app -> sw/arm
+legacy_arm = os.path.join("sw", "arm")
+
 if os.path.exists(app_dir):
     src_dirs.append(os.path.abspath(app_dir))
+elif app_name == "zynq_app" and os.path.exists(legacy_arm):
+    src_dirs.append(os.path.abspath(legacy_arm))
 elif app_name == "zynq_app" and os.path.exists("arm_sources.txt"):
     with open("arm_sources.txt", "r") as f:
         for line in f:
@@ -50,14 +55,16 @@ elif app_name == "zynq_app" and os.path.exists("arm_sources.txt"):
             if d and not d.startswith("#") and os.path.exists(d):
                 src_dirs.append(os.path.abspath(d))
 else:
-    # Fallback to standard sw/ directory
-    if os.path.exists("sw"):
+    # If a specific app name is provided but directory doesn't exist,
+    # we DO NOT default to ./sw, because the user wants a NEW project.
+    if app_name == "zynq_app" and os.path.exists("sw"):
         src_dirs.append(os.path.abspath("sw"))
 
 # 3. Create and Build Application
 if src_dirs:
+    # Source exists: Ensure Vitis component exists and build it
     if not os.path.exists(os.path.join(WORKSPACE, app_name)):
-        print(f"🚀 Creating Vitis Application {app_name}...")
+        print(f"🚀 Creating Vitis Application {app_name} from existing sources...")
         app = client.create_app_component(
             name=app_name,
             platform=platform_path,
@@ -75,6 +82,10 @@ if src_dirs:
     print(f"🔨 Building {app_name}...")
     app.build()
 else:
-    print(f"⚠️  No source directories found for application {app_name}. Skipping build.")
+    # Source DOES NOT exist: Do not create the component automatically
+    # This allows the user to use the Vitis GUI "Create from Template" workflow.
+    print(f"ℹ️  Source directory for '{app_name}' not found.")
+    print(f"   If you want to start a new project, use 'make edit-sw' and create the component '{app_name}' in the GUI.")
+    print(f"   Once created, run 'make sync-sw' to save it to the framework.")
 
 print("✅ Vitis Build Process Complete!")
