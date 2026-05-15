@@ -16,7 +16,10 @@ client.set_workspace(path=WORKSPACE)
 
 # 1. Platform Component (Mandatory for hardware init/clocks)
 plat_name = f"{board}_plat"
-if not os.path.exists(os.path.join(WORKSPACE, plat_name)):
+plat_dir = os.path.join(WORKSPACE, plat_name)
+platform_xpfm = os.path.join(plat_dir, "export", plat_name, f"{plat_name}.xpfm")
+
+if not os.path.exists(plat_dir):
     print(f"🚀 Creating Platform {plat_name}...")
     platform = client.create_platform_component(
         name=plat_name,
@@ -29,6 +32,25 @@ if not os.path.exists(os.path.join(WORKSPACE, plat_name)):
     platform.build()
 else:
     print(f"✅ Platform {plat_name} already exists.")
+    # Check if XSA is newer than the platform
+    if os.path.exists(XSA_PATH) and os.path.exists(platform_xpfm):
+        xsa_mtime = os.path.getmtime(XSA_PATH)
+        plat_mtime = os.path.getmtime(platform_xpfm)
+        if xsa_mtime > plat_mtime:
+            print(f"🔄 Hardware specification changed. Updating Platform {plat_name}...")
+            platform = client.get_component(name=plat_name)
+            platform.update_hw(hw_design=XSA_PATH)
+            time.sleep(2)
+            print(f"🔨 Rebuilding Platform {plat_name}...")
+            platform.build()
+        else:
+            print(f"ℹ️  Platform {plat_name} is up to date with hardware.")
+    elif os.path.exists(XSA_PATH):
+        # Platform exists but maybe not built yet?
+        print(f"⚠️  Platform {plat_name} exists but .xpfm not found. Attempting update and build...")
+        platform = client.get_component(name=plat_name)
+        platform.update_hw(hw_design=XSA_PATH)
+        platform.build()
 
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
 
