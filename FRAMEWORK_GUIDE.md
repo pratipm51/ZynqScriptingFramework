@@ -69,7 +69,7 @@ Below is the complete guide to the framework's `Makefile` targets:
 | Target | Description |
 | :--- | :--- |
 | `make hw` | **Hardware Build:** Runs Vivado in batch mode. Synthesizes VHDL, implements the design, generates the Bitstream, and exports the `.xsa` platform. |
-| `make sw` | **Software Build:** Runs Vitis in batch mode. Creates/updates the platform component and compiles the C application into an `.elf` file. |
+| `make sw` | **Software Build:** Runs Vitis in batch mode. Creates/updates the platform component and compiles the C application into an `.elf` file. **Now includes auto-update logic for hardware changes.** |
 | `make edit-sw` | **Vitis IDE:** Opens the Vitis Unified IDE for interactive development and testing. Changes made here must be synced back using `make sync-sw`. |
 | `make sync-sw` | **Export:** Harvests files created/modified in the Vitis GUI and copies them back to the framework's `sw/` folders for version control. |
 | `make delete-sw` | **Cleanup:** Removes the specified application sources and its corresponding Vitis workspace component. |
@@ -201,7 +201,35 @@ A simple Python tool to upload compiled binary files to the NeoRV32 soft-CPU via
 
 ---
 
-## 9. Git Best Practices
+## 9. Advanced Software Management
+
+### Hardware-Aware Platform Updates
+The framework automatically detects when your hardware design has changed. If you run `make hw` and then `make sw`, the script will compare the timestamp of the generated `.xsa` file with the existing Vitis platform. 
+
+If the hardware is newer, it will automatically:
+1. Update the hardware specification of the platform.
+2. Rebuild the platform (regenerating `xparameters.h`, FSBL, and drivers).
+3. Rebuild your application against the new hardware.
+
+### Multi-OS Selection (`APP=name:os`)
+You can manage different operating systems (Standalone vs. FreeRTOS) directly via the `APP` variable. This allows you to maintain multiple software environments for the same hardware.
+
+**Syntax:** `make sw APP=<app_name>:<os>`
+
+| OS Shortcut | Full Vitis OS Name |
+| :--- | :--- |
+| `standalone` | `standalone` (Default) |
+| `freertos` | `freertos10_xilinx` |
+
+**Examples:**
+- **Bare-metal:** `make sw APP=my_app` or `make sw APP=my_app:standalone`
+- **FreeRTOS:** `make sw APP=my_rtos_app:freertos`
+
+**Note:** The framework creates separate platform components for each OS (e.g., `board_standalone_plat` and `board_freertos_plat`). This ensures that switching between OS types is instant and does not require a full rebuild of the other platform.
+
+---
+
+## 10. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**
