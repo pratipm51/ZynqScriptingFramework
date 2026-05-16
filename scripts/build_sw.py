@@ -3,9 +3,18 @@ import sys
 import os
 import time
 
-# Arguments from Makefile: board, app_name
+# Arguments from Makefile: board, app_name, os_arg
 board = sys.argv[1] if len(sys.argv) > 1 else "ebaz"
 app_name = sys.argv[2] if len(sys.argv) > 2 else "zynq_app"
+os_arg = sys.argv[3] if len(sys.argv) > 3 else "standalone"
+
+# Normalize OS names (shortcut support)
+os_map = {
+    "standalone": "standalone",
+    "freertos": "freertos10_xilinx",
+    "freertos10_xilinx": "freertos10_xilinx"
+}
+os_type = os_map.get(os_arg.lower(), os_arg)
 
 XSA_PATH = os.path.abspath(f"./hw_build/{board}/system.xsa")
 WORKSPACE = os.path.abspath(f"./vitis_ws")
@@ -14,17 +23,17 @@ client = vitis.create_client()
 time.sleep(2)
 client.set_workspace(path=WORKSPACE)
 
-# 1. Platform Component (Mandatory for hardware init/clocks)
-plat_name = f"{board}_plat"
+# 1. Platform Component (Include OS in name to allow coexistence)
+plat_name = f"{board}_{os_arg}_plat"
 plat_dir = os.path.join(WORKSPACE, plat_name)
 platform_xpfm = os.path.join(plat_dir, "export", plat_name, f"{plat_name}.xpfm")
 
 if not os.path.exists(plat_dir):
-    print(f"🚀 Creating Platform {plat_name}...")
+    print(f"🚀 Creating Platform {plat_name} for OS: {os_type}...")
     platform = client.create_platform_component(
         name=plat_name,
         hw_design=XSA_PATH,
-        os="standalone",
+        os=os_type,
         cpu="ps7_cortexa9_0"
     )
     time.sleep(2)
@@ -86,11 +95,11 @@ else:
 if src_dirs:
     # Source exists: Ensure Vitis component exists and build it
     if not os.path.exists(os.path.join(WORKSPACE, app_name)):
-        print(f"🚀 Creating Vitis Application {app_name} from existing sources...")
+        print(f"🚀 Creating Vitis Application {app_name} on platform {plat_name}...")
         app = client.create_app_component(
             name=app_name,
             platform=platform_path,
-            domain="standalone_ps7_cortexa9_0"
+            domain=f"{os_type}_ps7_cortexa9_0"
         )
     else:
         print(f"✅ Application {app_name} already exists. Syncing sources...")

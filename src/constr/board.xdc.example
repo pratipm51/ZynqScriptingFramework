@@ -22,3 +22,11 @@ set_property -dict {PACKAGE_PIN L19 IOSTANDARD LVCMOS33} [get_ports {GPIO_0_0_tr
 
 # Dummy Constraint for Ethernet PHY Clock Output
 set_property -dict {PACKAGE_PIN M19 IOSTANDARD LVCMOS33} [get_ports enet0_phy_clk]
+
+# --- EBAZ4205/Custom Board Ethernet Clock Fixes ---
+# Uncomment if you get placement errors on Ethernet clocks:
+# set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_ports ENET0_GMII_TX_CLK_0]]
+
+# Example Ethernet Clock definitions (25 MHz / 40ns)
+# create_clock -period 40.000 -name eth_tx_clk [get_ports ENET0_GMII_TX_CLK_0]
+# create_clock -period 40.000 -name eth_rx_clk [get_ports ENET0_GMII_RX_CLK_0]

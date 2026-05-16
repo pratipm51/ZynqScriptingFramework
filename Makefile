@@ -5,27 +5,20 @@
 BOARD ?= my_board
 PART  ?= xc7z010clg400-1
 TARGET_LANGUAGE ?= VHDL
-# Active application component name (default: zynq_app)
-APP ?= zynq_app
+# --- OS Detection Logic ---
+# Syntax: make sw APP=my_app:freertos
+# This splits $(APP) into Name and OS parts
+APP_NAME = $(word 1,$(subst :, ,$(APP)))
+APP_OS   = $(word 2,$(subst :, ,$(APP)))
 
-# Extra VHDL libraries (alternative to vhdl_libs.txt file)
-export EXTRA_VHDL_LIBS
+# Default OS to standalone if not provided
+REAL_OS = $(if $(APP_OS),$(APP_OS),standalone)
 
-# Software source directories (alternative to sw_sources.txt file)
-export USER_SW_DIRS
-
-# Custom target for the sw/Makefile (default to all)
-SW_TARGET ?= all
-
-HW_XSA = ./hw_build/$(BOARD)/system.xsa
-BIT_FILE = ./hw_build/$(BOARD)/system.bit
-
+# Update paths to use the parsed APP_NAME
 FSBL_ELF = ./vitis_ws/$(BOARD)_plat/zynq_fsbl/build/fsbl.elf
-# Default application ELF path (can be overridden for custom CPUs)
-APP_ELF ?= ./vitis_ws/$(BOARD)_app/build/$(BOARD)_app.elf
-# Zynq PS-side application (Active if arm_sources.txt or APP directory exists)
-ZYNQ_ELF = ./vitis_ws/$(APP)/build/$(APP).elf
-PS_INIT = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
+APP_ELF  ?= ./vitis_ws/$(APP_NAME)/build/$(APP_NAME).elf
+ZYNQ_ELF = ./vitis_ws/$(APP_NAME)/build/$(APP_NAME).elf
+PS_INIT  = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
 
 .DEFAULT_GOAL := help
 
@@ -80,8 +73,8 @@ sw:
         echo "❌ Error: Hardware XSA not found at $(HW_XSA). Run 'make hw' first."; \
         exit 1; \
     fi
-	@echo "🚀 Ensuring Zynq Platform and Application '$(APP)' are ready..."
-	vitis -s scripts/build_sw.py $(BOARD) $(APP)
+	@echo "🚀 Ensuring Zynq Platform and Application '$(APP_NAME)' ($(REAL_OS)) are ready..."
+	vitis -s scripts/build_sw.py $(BOARD) $(APP_NAME) $(REAL_OS)
 	@if [ -f sw/Makefile ]; then \
 		echo "🛠️  Detected custom software Makefile. Running target: $(SW_TARGET)..."; \
 		$(MAKE) -C sw BOARD=$(BOARD) $(SW_TARGET); \
@@ -94,18 +87,18 @@ edit-sw: sw
 
 # Harvest changes from Vitis GUI back to the framework sources
 sync-sw:
-	@python3 scripts/sync_sw.py $(APP)
+	@python3 scripts/sync_sw.py $(APP_NAME)
 
 # Safely delete a software application
 delete-sw:
-	@echo "🗑️  Deleting application '$(APP)'..."
-	@if [ "$(APP)" = "zynq_app" ] && [ -d sw/arm ]; then \
+	@echo "🗑️  Deleting application '$(APP_NAME)'..."
+	@if [ "$(APP_NAME)" = "zynq_app" ] && [ -d sw/arm ]; then \
 		rm -rf sw/arm; \
-	elif [ -d sw/$(APP) ]; then \
-		rm -rf sw/$(APP); \
+	elif [ -d sw/$(APP_NAME) ]; then \
+		rm -rf sw/$(APP_NAME); \
 	fi
-	@rm -rf vitis_ws/$(APP)
-	@echo "✅ Application '$(APP)' removed from framework and workspace."
+	@rm -rf vitis_ws/$(APP_NAME)
+	@echo "✅ Application '$(APP_NAME)' removed from framework and workspace."
 
 # Generate BOOT.BIN
 boot:
