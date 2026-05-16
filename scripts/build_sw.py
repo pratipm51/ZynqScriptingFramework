@@ -11,8 +11,8 @@ os_arg = sys.argv[3] if len(sys.argv) > 3 else "standalone"
 # Normalize OS names (shortcut support)
 os_map = {
     "standalone": "standalone",
-    "freertos": "freertos10_xilinx",
-    "freertos10_xilinx": "freertos10_xilinx"
+    "freertos": "freertos",
+    "freertos10_xilinx": "freertos"
 }
 os_type = os_map.get(os_arg.lower(), os_arg)
 
@@ -27,6 +27,12 @@ client.set_workspace(path=WORKSPACE)
 plat_name = f"{board}_{os_arg}_plat"
 plat_dir = os.path.join(WORKSPACE, plat_name)
 platform_xpfm = os.path.join(plat_dir, "export", plat_name, f"{plat_name}.xpfm")
+
+# Self-healing: If directory exists but creation/build failed before, remove it
+if os.path.exists(plat_dir) and not os.path.exists(platform_xpfm):
+    print(f"🧹 Cleaning up failed platform attempt at {plat_name}...")
+    import shutil
+    shutil.rmtree(plat_dir)
 
 if not os.path.exists(plat_dir):
     print(f"🚀 Creating Platform {plat_name} for OS: {os_type}...")
