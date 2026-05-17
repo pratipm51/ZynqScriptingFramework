@@ -23,6 +23,31 @@ client = vitis.create_client()
 time.sleep(2)
 client.set_workspace(path=WORKSPACE)
 
+# Helper to apply standard project configurations
+def apply_framework_configs(platform):
+    domain_name = f"{os_type}_ps7_cortexa9_0"
+    try:
+        domain = platform.get_domain(name=domain_name)
+    except:
+        # Fallback if domain detection fails
+        return
+
+    print(f"📦 Configuring Domain: {domain_name}")
+    
+    # 1. Enable standard libraries
+    libs = [lib['name'] for lib in domain.get_libs()]
+    for req_lib in ["lwip220", "xiltimer"]:
+        if req_lib not in libs:
+            print(f"   -> Adding library: {req_lib}")
+            domain.set_lib(lib_name=req_lib)
+
+    # 2. Configure lwIP (DHCP)
+    print("   -> Configuring lwIP with DHCP support...")
+    try:
+        domain.set_config(option="lib", param="lwip220.lwip_dhcp", value="true")
+    except Exception as e:
+        print(f"   ⚠️ Warning: Could not set lwip_dhcp: {e}")
+
 # 1. Platform Component (Include OS in name to allow coexistence)
 plat_name = f"{board}_{os_arg}_plat"
 plat_dir = os.path.join(WORKSPACE, plat_name)
@@ -42,58 +67,42 @@ if not os.path.exists(plat_dir):
         os=os_type,
         cpu="ps7_cortexa9_0"
     )
-    
-    # --- Framework Feature: Automatic Library Support ---
-    domain = platform.get_domain(name=f"{os_type}_ps7_cortexa9_0")
-    print("📦 Enabling standard libraries (lwip220, xiltimer)...")
-    domain.set_lib(lib_name="lwip220")
-    domain.set_lib(lib_name="xiltimer")
-    
-    # --- Framework Feature: LWIP Configuration (DHCP) ---
-    print("🌐 Configuring lwIP with DHCP support...")
-    try:
-        # Note: In Vitis 2025.2, 'lib' is the correct option for library params
-        domain.set_config(option="lib", param="lwip220.lwip_dhcp", value="true")
-    except Exception as e:
-        print(f"⚠️ Warning: Could not set lwip_dhcp via API: {e}")
-
+    apply_framework_configs(platform)
     time.sleep(2)
     print(f"🔨 Building Platform {plat_name}...")
     platform.build()
 else:
     print(f"✅ Platform {plat_name} already exists.")
+    platform = client.get_component(name=plat_name)
+    
     # Check if XSA is newer than the platform
+    needs_rebuild = False
     if os.path.exists(XSA_PATH) and os.path.exists(platform_xpfm):
         xsa_mtime = os.path.getmtime(XSA_PATH)
         plat_mtime = os.path.getmtime(platform_xpfm)
         if xsa_mtime > plat_mtime:
             print(f"🔄 Hardware specification changed. Updating Platform {plat_name}...")
-            platform = client.get_component(name=plat_name)
             platform.update_hw(hw_design=XSA_PATH)
-            time.sleep(2)
-            print(f"🔨 Rebuilding Platform {plat_name}...")
-            platform.build()
-        else:
-            print(f"ℹ️  Platform {plat_name} is up to date with hardware.")
+            needs_rebuild = True
     elif os.path.exists(XSA_PATH):
-        # Platform exists but maybe not built yet?
-        print(f"⚠️  Platform {plat_name} exists but .xpfm not found. Attempting update and build...")
-        platform = client.get_component(name=plat_name)
+        print(f"⚠️  Platform {plat_name} exists but .xpfm not found. Attempting update...")
         platform.update_hw(hw_design=XSA_PATH)
+        needs_rebuild = True
+
+    # Always ensure configs are applied in case they were lost during update or manual changes
+    apply_framework_configs(platform)
+    
+    if needs_rebuild:
+        print(f"🔨 Rebuilding Platform {plat_name}...")
         platform.build()
+    else:
+        print(f"ℹ️  Platform {plat_name} is up to date.")
 
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
 
 # 2. Determine Source Directory for Application
-# Priority: 
-# 1. sw/<app_name> directory
-# 2. Paths in arm_sources.txt (if app_name is default 'zynq_app')
-# 3. Default sw/ directory (legacy support)
-
 src_dirs = []
 app_dir = os.path.join("sw", app_name)
-
-# Legacy check for zynq_app -> sw/arm
 legacy_arm = os.path.join("sw", "arm")
 
 if os.path.exists(app_dir):
@@ -107,14 +116,11 @@ elif app_name == "zynq_app" and os.path.exists("arm_sources.txt"):
             if d and not d.startswith("#") and os.path.exists(d):
                 src_dirs.append(os.path.abspath(d))
 else:
-    # If a specific app name is provided but directory doesn't exist,
-    # we DO NOT default to ./sw, because the user wants a NEW project.
     if app_name == "zynq_app" and os.path.exists("sw"):
         src_dirs.append(os.path.abspath("sw"))
 
 # 3. Create and Build Application
 if src_dirs:
-    # Source exists: Ensure Vitis component exists and build it
     if not os.path.exists(os.path.join(WORKSPACE, app_name)):
         print(f"🚀 Creating Vitis Application {app_name} on platform {plat_name}...")
         app = client.create_app_component(
@@ -126,7 +132,6 @@ if src_dirs:
         print(f"✅ Application {app_name} already exists. Syncing sources...")
         app = client.get_component(name=app_name)
     
-    # Import all source directories
     for d in src_dirs:
         print(f"   -> Importing sources from {d}")
         app.import_files(from_loc=d, dest_dir_in_cmp="src")
@@ -134,10 +139,6 @@ if src_dirs:
     print(f"🔨 Building {app_name}...")
     app.build()
 else:
-    # Source DOES NOT exist: Do not create the component automatically
-    # This allows the user to use the Vitis GUI "Create from Template" workflow.
     print(f"ℹ️  Source directory for '{app_name}' not found.")
-    print(f"   If you want to start a new project, use 'make edit-sw' and create the component '{app_name}' in the GUI.")
-    print(f"   Once created, run 'make sync-sw' to save it to the framework.")
 
 print("✅ Vitis Build Process Complete!")
