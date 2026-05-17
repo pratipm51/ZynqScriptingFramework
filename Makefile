@@ -5,20 +5,28 @@
 BOARD ?= my_board
 PART  ?= xc7z010clg400-1
 TARGET_LANGUAGE ?= VHDL
-# --- OS Detection Logic ---
-# Syntax: make sw APP=my_app:freertos
-# This splits $(APP) into Name and OS parts
-APP_NAME = $(word 1,$(subst :, ,$(APP)))
-APP_OS   = $(word 2,$(subst :, ,$(APP)))
+# --- V2 Dynamic Configuration Logic ---
+# Use command line APP if provided, otherwise use DEFAULT_APP from config
+ACTIVE_APP ?= $(DEFAULT_APP)
 
-# Default OS to standalone if not provided
+# Find the matching entry in APPS (e.g., "hello_world:basic_plat:standalone")
+APP_TUPLE = $(filter $(ACTIVE_APP):%, $(APPS))
+
+# Parse the tuple
+APP_NAME = $(word 1,$(subst :, ,$(APP_TUPLE)))
+PLAT_NAME = $(word 2,$(subst :, ,$(APP_TUPLE)))
+APP_OS   = $(word 3,$(subst :, ,$(APP_TUPLE)))
+
+# Fallback values if parsing fails
+REAL_APP = $(if $(APP_NAME),$(APP_NAME),$(ACTIVE_APP))
+REAL_PLAT = $(if $(PLAT_NAME),$(PLAT_NAME),$(BOARD)_standalone_plat)
 REAL_OS = $(if $(APP_OS),$(APP_OS),standalone)
 
-# Update paths to use the parsed APP_NAME
-FSBL_ELF = ./vitis_ws/$(BOARD)_$(REAL_OS)_plat/zynq_fsbl/build/fsbl.elf
-APP_ELF  ?= ./vitis_ws/$(APP_NAME)/build/$(APP_NAME).elf
-ZYNQ_ELF = ./vitis_ws/$(APP_NAME)/build/$(APP_NAME).elf
-PS_INIT  = ./vitis_ws/$(BOARD)_$(REAL_OS)_plat/export/$(BOARD)_$(REAL_OS)_plat/hw/sdt/ps7_init.tcl
+# Update paths to use the parsed components
+FSBL_ELF = ./vitis_ws/$(REAL_PLAT)/zynq_fsbl/build/fsbl.elf
+APP_ELF  ?= ./vitis_ws/$(REAL_APP)/build/$(REAL_APP).elf
+ZYNQ_ELF = ./vitis_ws/$(REAL_APP)/build/$(REAL_APP).elf
+PS_INIT  = ./vitis_ws/$(REAL_PLAT)/export/$(REAL_PLAT)/hw/sdt/ps7_init.tcl
 BIT_FILE = ./hw_build/$(BOARD)/system.bit
 HW_XSA   = ./hw_build/$(BOARD)/system.xsa
 
@@ -75,12 +83,8 @@ sw:
         echo "❌ Error: Hardware XSA not found at $(HW_XSA). Run 'make hw' first."; \
         exit 1; \
     fi
-	@echo "🚀 Ensuring Zynq Platform and Application '$(APP_NAME)' ($(REAL_OS)) are ready..."
-	vitis -s scripts/build_sw.py $(BOARD) $(APP_NAME) $(REAL_OS)
-	@if [ -f sw/Makefile ]; then \
-		echo "🛠️  Detected custom software Makefile. Running target: $(SW_TARGET)..."; \
-		$(MAKE) -C sw BOARD=$(BOARD) $(SW_TARGET); \
-	fi
+	@echo "🚀 Ensuring Zynq Platform '$(REAL_PLAT)' and App '$(REAL_APP)' ($(REAL_OS)) are ready..."
+	vitis -s scripts/build_sw.py $(BOARD) $(REAL_APP) $(REAL_PLAT) $(REAL_OS)
 
 # GUI Workflow: Open Vitis for interactive development
 edit-sw: sw
@@ -88,8 +92,15 @@ edit-sw: sw
 	vitis -w ./vitis_ws &
 
 # Harvest changes from Vitis GUI back to the framework sources
+# Loops through ALL apps and platforms defined in project_config.mk
 sync-sw:
-	@python3 scripts/sync_sw.py $(APP_NAME)
+	@echo "🔄 Syncing ALL applications and platforms back to framework..."
+	@for app_entry in $(APPS); do \
+		app=$$(echo $$app_entry | cut -d':' -f1); \
+		plat=$$(echo $$app_entry | cut -d':' -f2); \
+		echo "📂 Syncing App: $$app (Plat: $$plat)..."; \
+		python3 scripts/sync_sw.py $$app $$plat; \
+	done
 
 # Safely delete a software application
 delete-sw:
