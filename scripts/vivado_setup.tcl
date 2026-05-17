@@ -21,39 +21,43 @@ proc ::sync_bd { {path ""} } {
 
     # --- BOOTSTRAP TOP.VHD ---
     set top_vhd [file normalize "./src/hdl/top.vhd"]
-    if {![file exists $top_vhd]} {
-        puts "🌱 No top.vhd found. Attempting to bootstrap from Block Design..."
-        
-        set bd_files [get_files -quiet *.bd]
-        if {$bd_files == ""} {
-            puts "⚠️  No Block Design found in project. Skipping bootstrap."
-            return
-        }
+    
+    set bd_files [get_files -quiet *.bd]
+    if {$bd_files == ""} {
+        puts "⚠️  No Block Design found in project. Skipping bootstrap."
+        return
+    }
 
-        # Generate the wrapper to get the port list
-        puts "🔨 Generating wrapper for [lindex $bd_files 0]..."
-        set wrapper_path [make_wrapper -files $bd_files -top]
+    # Generate the wrapper to get the port list
+    puts "🔨 Generating wrapper for [lindex $bd_files 0]..."
+    set wrapper_path [make_wrapper -files $bd_files -top]
+    
+    if {[file exists $wrapper_path]} {
+        # Read the wrapper and create a 'top' version
+        set fp [open $wrapper_path r]
+        set content [read $fp]
+        close $fp
         
-        if {[file exists $wrapper_path]} {
-            # Read the wrapper and create a 'top' version
-            set fp [open $wrapper_path r]
-            set content [read $fp]
+        # Simple replacement: rename the wrapper entity/architecture to 'top'
+        set wrapper_entity [file rootname [file tail $wrapper_path]]
+        regsub -all $wrapper_entity $content "top" new_content
+        
+        # Ensure the directory exists
+        file mkdir [file dirname $top_vhd]
+        
+        if {[file exists $top_vhd]} {
+            set top_vhd_new "${top_vhd}.new"
+            puts "📝 Existing top.vhd found. Saving new wrapper to: $top_vhd_new"
+            set fp [open $top_vhd_new w]
+            puts $fp $new_content
             close $fp
-            
-            # Simple replacement: rename the wrapper entity/architecture to 'top'
-            # This works for both 'system' and 'system_wrapper' names
-            set wrapper_entity [file rootname [file tail $wrapper_path]]
-            regsub -all $wrapper_entity $content "top" new_content
-            
-            # Ensure the directory exists
-            file mkdir [file dirname $top_vhd]
-            
-            # Write the new top-level
+            puts "👉 Action required: Compare and merge changes from .new into your top.vhd"
+        } else {
+            puts "🌱 No top.vhd found. Creating initial bootstrap top-level..."
             set fp [open $top_vhd w]
             puts $fp $new_content
             close $fp
             puts "✅ Created bootstrap top-level at: $top_vhd"
-            puts "👉 NOTE: You can now instantiate your Soft-CPU or custom logic inside this file."
         }
     }
 }
