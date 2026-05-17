@@ -52,7 +52,15 @@ for comp in components:
     count = 0
     for f in os.listdir(vitis_src):
         if f.lower().endswith(valid_exts):
-            shutil.copy2(os.path.join(vitis_src, f), os.path.join(dest_dir, f))
+            src_file = os.path.join(vitis_src, f)
+            dst_file = os.path.join(dest_dir, f)
+            
+            # Ensure dst is writeable if it exists
+            if os.path.exists(dst_file):
+                import stat
+                os.chmod(dst_file, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
+            
+            shutil.copy2(src_file, dst_file)
             count += 1
 
     print(f"   -> Synced {count} files.")
