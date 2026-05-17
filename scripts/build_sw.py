@@ -44,12 +44,18 @@ if not os.path.exists(plat_dir):
     )
     
     # --- Framework Feature: Automatic Library Support ---
-    # We enable lwIP by default for Zynq projects if we detect ethernet in hardware
-    # or if we want to provide it as a standard service.
     domain = platform.get_domain(name=f"{os_type}_ps7_cortexa9_0")
     print("📦 Enabling standard libraries (lwip220, xiltimer)...")
     domain.set_lib(lib_name="lwip220")
     domain.set_lib(lib_name="xiltimer")
+    
+    # --- Framework Feature: LWIP Configuration (DHCP) ---
+    print("🌐 Configuring lwIP with DHCP support...")
+    try:
+        # Note: In Vitis 2025.2, 'lib' is the correct option for library params
+        domain.set_config(option="lib", param="lwip220.lwip_dhcp", value="true")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not set lwip_dhcp via API: {e}")
 
     time.sleep(2)
     print(f"🔨 Building Platform {plat_name}...")
