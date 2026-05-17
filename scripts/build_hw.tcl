@@ -94,8 +94,20 @@ if {[file exists $bd_script]} {
     # We do this AFTER sourcing because the BD script often has a hardcoded language
     set_property target_language $target_lang [current_project]
     
-    # Target only the top-level system.bd to avoid nested BD errors (e.g. SmartConnect)
-    set bd_file [get_files system.bd]
+    # Detect the block design file dynamically
+    set bd_design [current_bd_design]
+    if {$bd_design == ""} {
+        set bd_files [get_files *.bd]
+        if {[llength $bd_files] == 0} {
+            puts "❌ Error: No Block Design (.bd) file found."
+            exit 1
+        }
+        set bd_file [lindex $bd_files 0]
+    } else {
+        set bd_file [get_files [get_property NAME $bd_design].bd]
+    }
+    puts "📂 Using Block Design: $bd_file"
+
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
     puts "📦 Generated Wrapper: $wrapper_file"

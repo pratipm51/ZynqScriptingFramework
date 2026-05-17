@@ -15,10 +15,12 @@ APP_OS   = $(word 2,$(subst :, ,$(APP)))
 REAL_OS = $(if $(APP_OS),$(APP_OS),standalone)
 
 # Update paths to use the parsed APP_NAME
-FSBL_ELF = ./vitis_ws/$(BOARD)_plat/zynq_fsbl/build/fsbl.elf
+FSBL_ELF = ./vitis_ws/$(BOARD)_$(REAL_OS)_plat/zynq_fsbl/build/fsbl.elf
 APP_ELF  ?= ./vitis_ws/$(APP_NAME)/build/$(APP_NAME).elf
 ZYNQ_ELF = ./vitis_ws/$(APP_NAME)/build/$(APP_NAME).elf
-PS_INIT  = ./vitis_ws/$(BOARD)_plat/export/$(BOARD)_plat/hw/sdt/ps7_init.tcl
+PS_INIT  = ./vitis_ws/$(BOARD)_$(REAL_OS)_plat/export/$(BOARD)_$(REAL_OS)_plat/hw/sdt/ps7_init.tcl
+BIT_FILE = ./hw_build/$(BOARD)/system.bit
+HW_XSA   = ./hw_build/$(BOARD)/system.xsa
 
 .DEFAULT_GOAL := help
 
