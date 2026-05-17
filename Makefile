@@ -7,7 +7,7 @@ PART  ?= xc7z010clg400-1
 TARGET_LANGUAGE ?= VHDL
 # --- V2 Dynamic Configuration Logic ---
 # Use command line APP if provided, otherwise use DEFAULT_APP from config
-ACTIVE_APP ?= $(DEFAULT_APP)
+ACTIVE_APP = $(if $(APP),$(APP),$(DEFAULT_APP))
 
 # Find the matching entry in APPS (e.g., "hello_world:basic_plat:standalone")
 APP_TUPLE = $(filter $(ACTIVE_APP):%, $(APPS))
