@@ -42,6 +42,15 @@ if not os.path.exists(plat_dir):
         os=os_type,
         cpu="ps7_cortexa9_0"
     )
+    
+    # --- Framework Feature: Automatic Library Support ---
+    # We enable lwIP by default for Zynq projects if we detect ethernet in hardware
+    # or if we want to provide it as a standard service.
+    domain = platform.get_domain(name=f"{os_type}_ps7_cortexa9_0")
+    print("📦 Enabling standard libraries (lwip220, xiltimer)...")
+    domain.set_lib(lib_name="lwip220")
+    domain.set_lib(lib_name="xiltimer")
+
     time.sleep(2)
     print(f"🔨 Building Platform {plat_name}...")
     platform.build()
