@@ -48,8 +48,9 @@ A professional, version-control-friendly workflow for Xilinx Zynq-7000 SoC devel
 ### 2. Initialization
 1. Clone the repository.
 2. Run `make edit-hw` to configure your Zynq Block Design.
-3. Use the **Port Synchronization** steps in `FRAMEWORK_GUIDE.md` to create your `top.vhd` from the templates.
+3. Use the **Port Synchronization** steps in `FRAMEWORK_GUIDE.md` to create your `top.vhd`/`top.v` from the templates.
 4. Click the **"Sync to Framework"** button in Vivado.
+5. Set up your software application in `sw/zynq_ps/` (a template [main.c](file:///home/pratip/data/FPGA/ZynqScriptingFramework/sw/zynq_ps/main.c) is pre-configured to initialize the PS clocks, UART, and memory).
 
 ### 3. Build & Run
 ```bash
