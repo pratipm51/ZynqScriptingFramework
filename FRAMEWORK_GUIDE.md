@@ -154,18 +154,44 @@ For complex designs with multiple packages and dependencies, you can control the
 
 ## 7. Global Configuration (`project_config.mk`)
 
-Instead of passing configuration values on the command line every time, you can create a file named **`project_config.mk`** in the root of your project.
+Instead of passing configuration values on the command line every time, you can create a file named **`project_config.mk`** in the root of your project. The framework will automatically read this file and use these values as defaults for all commands.
 
-**Format:**
+Below is a detailed guide to all configuration variables supported by the framework `Makefile`:
+
+### Hardware & Project Variables
+
+| Variable | Description | Default Value | Example |
+| :--- | :--- | :--- | :--- |
+| `BOARD` | The name of the target board. The framework uses this to locate `./board_configs/$(BOARD)_bd.tcl` for the block design and `./src/constr/$(BOARD).xdc` for pin constraints. | `my_board` | `BOARD = ebaz4205` |
+| `PART` | The target Xilinx FPGA part number. | `xc7z010clg400-1` | `PART = xc7z020clg400-1` |
+| `TARGET_LANGUAGE` | The target hardware description language for the Vivado project, synthesis, and generated block design wrappers. Valid values are `VHDL` or `Verilog`. | `VHDL` | `TARGET_LANGUAGE = Verilog` |
+| `BD_NAME` | The name of the Block Design (e.g. `system.bd`). | `system` | `BD_NAME = system` |
+
+### Software & Application Management Variables
+
+| Variable | Description | Default Value | Example |
+| :--- | :--- | :--- | :--- |
+| `APPS` | A space-separated list of application tuples mapping a shortcut name, target platform, and operating system. Format: `<shortcut>:<platform_name>:<os>` | *None* | `APPS = hello_world:sys_plat:standalone my_rtos:rtos_plat:freertos` |
+| `DEFAULT_APP` | The default application shortcut to build if the `APP` variable is not specified on the command line. Must match a shortcut defined in `APPS`. | *None* | `DEFAULT_APP = hello_world` |
+| `APP` | Command line parameter or configuration variable to choose the active application workspace component to compile and run. | `$(DEFAULT_APP)` | `make sw APP=my_rtos` |
+| `APP_ELF` / `ZYNQ_ELF` | Overrides the target path to the compiled ARM Cortex-A9 software ELF executable file. | `./vitis_ws/$(REAL_APP)/build/...` | `APP_ELF = ./sw/zynq_ps/build.elf` |
+
+### Complete `project_config.mk` Example:
+
 ```make
-BOARD   = ebaz4205
-PART    = xc7z010clg400-1
-BD_NAME = system
+# project_config.mk - Project-wide settings
+BOARD           = ebaz4205
+PART            = xc7z010clg400-1
+TARGET_LANGUAGE = VHDL
+BD_NAME         = system
+
+# Define all available applications
+APPS = hello_world:ebaz_plat:standalone my_rtos:ebaz_freertos_plat:freertos
+
+# Set the default application
+DEFAULT_APP = hello_world
 ```
 
-The framework will automatically read this file and use these values as the defaults for all commands.
-
----
 
 ## 8. Hybrid Multi-CPU Support (ARM + Soft-CPU)
 
