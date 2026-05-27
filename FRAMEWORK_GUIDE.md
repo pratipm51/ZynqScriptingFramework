@@ -1,10 +1,10 @@
-# 🚀 Zynq-VHDL Logic: The Script-First Framework
+# 🚀 Zynq-HDL Logic: The Script-First Framework
 **A Professional Workflow for Xilinx Zynq-7000 SoC Development**
 
 ---
 
 ## 1. Introduction
-This framework provides a structured, version-control-friendly environment for Zynq-7000 FPGA development. It prioritizes **VHDL** for logic and **C** for software.
+This framework provides a structured, version-control-friendly environment for Zynq-7000 FPGA development. It prioritizes **HDL (VHDL, Verilog, or SystemVerilog)** for logic and **C** for software.
 
 ---
 
@@ -34,7 +34,7 @@ This framework strictly follows a **User-First Master Top-Level** approach.
    - It acts as the permanent anchor for your physical pins (XDC constraints).
    - **Auto-Bootstrap**: If this file is missing when you click "Sync to Framework" in Vivado, the framework will **automatically create it** for you, pre-filled with the correct Zynq ports. It dynamically creates either `top.vhd` or `top.v` depending on whether the design wrapper is VHDL or Verilog.
 2. **The System Wrapper (Instantiated Logic)**: 
-   - When you run `make hw`, the framework automatically generates a VHDL wrapper for your Block Design (which defaults to `system.bd` but can be customized with `BD_NAME` in `project_config.mk`).
+   - When you run `make hw`, the framework automatically generates an HDL wrapper for your Block Design (which defaults to `system.bd` but can be customized with `BD_NAME` in `project_config.mk`).
    - The bootstrapped `top.vhd` is pre-configured to instantiate this wrapper.
    - **Versioning Note**: The framework automatically detects the correct entity name for your version (typically matching your block design's name, e.g., `system` in 2025.2+, or `system_wrapper` in older versions) during the bootstrapping process.
 3. **Naming Convention**: Your Block Design defaults to being named `system`, but you can customize it dynamically using the `BD_NAME` variable in `project_config.mk`.
@@ -68,7 +68,7 @@ Below is the complete guide to the framework's `Makefile` targets:
 
 | Target | Description |
 | :--- | :--- |
-| `make hw` | **Hardware Build:** Runs Vivado in batch mode. Synthesizes VHDL, implements the design, generates the Bitstream, and exports the `.xsa` platform. |
+| `make hw` | **Hardware Build:** Runs Vivado in batch mode. Synthesizes HDL (VHDL/Verilog), implements the design, generates the Bitstream, and exports the `.xsa` platform. |
 | `make sw` | **Software Build:** Runs Vitis in batch mode. Creates/updates the platform component and compiles the C application into an `.elf` file. **Now includes auto-update logic for hardware changes.** |
 | `make edit-sw` | **Vitis IDE:** Opens the Vitis Unified IDE for interactive development and testing. Changes made here must be synced back using `make sync-sw`. |
 | `make sync-sw` | **Export:** Harvests files created/modified in the Vitis GUI (recursively scanning all subdirectories) and copies them back to the framework's `sw/` folders for version control, preserving directory hierarchy. |
@@ -89,7 +89,7 @@ Below is the complete guide to the framework's `Makefile` targets:
 
 ## 5. Troubleshooting: Why isn't my PL logic running?
 
-If your VHDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will not run** by simply flashing the bitstream with `make program`. 
+If your HDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will not run** by simply flashing the bitstream with `make program`. 
 
 **The Zynq PS clocks are disabled by default on power-up.** You must run `make run` to execute the PS initialization (via `ps7_init.tcl`), which enables the clocks and resets the PL logic.
 
@@ -110,7 +110,7 @@ custom_lib:./src/custom_rtl
 
 **Key Features:**
 - **Automatic Detection:** The framework finds all `.vhd`, `.vhdl`, `.v`, and `.sv` files in the specified path.
-- **Library Mapping:** It uses Vivado's `read_vhdl -library` command to assign the files to the correct namespace.
+- **Library Mapping:** It uses Vivado's `read_vhdl -library` or `read_verilog -library` commands to assign the files to the correct namespace.
 - **Path Flexibility:** Supports both **absolute paths** (recommended for shared cores) and **relative paths**.
 
 **VHDL Usage:**
@@ -139,7 +139,7 @@ The framework will automatically:
 
 ---
 
-### VHDL Compilation Order
+### VHDL/Verilog Compilation Order
 For complex designs with multiple packages and dependencies, you can control the compilation order:
 
 1. **Smart Sort (Automatic)**: By default, the framework automatically identifies files containing `_package` or `_pkg` in their name and compiles them before other logic files in the same library.
