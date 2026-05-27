@@ -1,12 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.gpio_types_pkg.all;
 
 entity axi_gpio is
     generic (
         NUM_INPUT_REGS   : integer := 2;
         NUM_OUTPUT_REGS  : integer := 2;
-        REG_WIDTH        : integer := 32;
+        GPIO_WIDTH       : integer := 32;
         AXI_ADDR_WIDTH   : integer := 32;
         AXI_DATA_WIDTH   : integer := 32;
         AXI_STRB_WIDTH   : integer := 4
@@ -45,9 +46,9 @@ entity axi_gpio is
         s_axi_rvalid     : out std_logic;
         s_axi_rready     : in  std_logic;
 
-        -- Parallel GPIO ports (flattened 1D arrays)
-        inputs_i         : in  std_logic_vector(NUM_INPUT_REGS * REG_WIDTH - 1 downto 0);
-        outputs_o        : out std_logic_vector(NUM_OUTPUT_REGS * REG_WIDTH - 1 downto 0)
+        -- Parallel GPIO ports (2D unconstrained arrays)
+        inputs_i         : in  gpio_array_t(0 to NUM_INPUT_REGS-1)(GPIO_WIDTH-1 downto 0);
+        outputs_o        : out gpio_array_t(0 to NUM_OUTPUT_REGS-1)(GPIO_WIDTH-1 downto 0)
     );
 end entity axi_gpio;
 
@@ -55,12 +56,8 @@ architecture behavioral of axi_gpio is
     -- Address decoding constants
     constant ADDR_LSB : integer := 2; -- For 32-bit registers, bottom 2 bits are byte offset
 
-    -- Internal registers arrays
-    type outputs_array_t is array (0 to NUM_OUTPUT_REGS-1) of std_logic_vector(REG_WIDTH-1 downto 0);
-    signal reg_outputs : outputs_array_t := (others => (others => '0'));
-
-    type inputs_array_t is array (0 to NUM_INPUT_REGS-1) of std_logic_vector(REG_WIDTH-1 downto 0);
-    signal reg_inputs : inputs_array_t;
+    -- Internal registers arrays (same size as outputs port)
+    signal reg_outputs : gpio_array_t(0 to NUM_OUTPUT_REGS-1)(GPIO_WIDTH-1 downto 0) := (others => (others => '0'));
 
     -- AXI internal state
     signal axi_awready : std_logic;
@@ -83,15 +80,8 @@ begin
     s_axi_rresp   <= "00"; -- OKAY response
     s_axi_rvalid  <= axi_rvalid;
 
-    -- Map flattened inputs to array
-    gen_inputs: for i in 0 to NUM_INPUT_REGS-1 generate
-        reg_inputs(i) <= inputs_i((i+1)*REG_WIDTH - 1 downto i*REG_WIDTH);
-    end generate gen_inputs;
-
-    -- Map array outputs to flattened vector
-    gen_outputs: for i in 0 to NUM_OUTPUT_REGS-1 generate
-        outputs_o((i+1)*REG_WIDTH - 1 downto i*REG_WIDTH) <= reg_outputs(i);
-    end generate gen_outputs;
+    -- Directly connect outputs port to registers
+    outputs_o <= reg_outputs;
 
     -- Write address handshake and register address
     process(s_axi_aclk)
@@ -139,10 +129,9 @@ begin
                     reg_idx := to_integer(unsigned(awaddr_reg(AXI_ADDR_WIDTH-1 downto ADDR_LSB)));
                     -- Write only to output register offsets
                     if reg_idx >= NUM_INPUT_REGS and reg_idx < (NUM_INPUT_REGS + NUM_OUTPUT_REGS) then
-                        for byte_idx in 0 to (REG_WIDTH/8)-1 loop
-                            if s_axi_wstrb(byte_idx) = '1' then
-                                reg_outputs(reg_idx - NUM_INPUT_REGS)((byte_idx+1)*8 - 1 downto byte_idx*8) <= 
-                                    s_axi_wdata((byte_idx+1)*8 - 1 downto byte_idx*8);
+                        for bit_idx in 0 to GPIO_WIDTH-1 loop
+                            if s_axi_wstrb(bit_idx/8) = '1' then
+                                reg_outputs(reg_idx - NUM_INPUT_REGS)(bit_idx) <= s_axi_wdata(bit_idx);
                             end if;
                         end loop;
                     end if;
@@ -201,9 +190,9 @@ begin
                     axi_rdata <= (others => '0'); -- Default return value
                     
                     if reg_idx >= 0 and reg_idx < NUM_INPUT_REGS then
-                        axi_rdata(REG_WIDTH-1 downto 0) <= reg_inputs(reg_idx);
+                        axi_rdata(GPIO_WIDTH-1 downto 0) <= inputs_i(reg_idx);
                     elsif reg_idx >= NUM_INPUT_REGS and reg_idx < (NUM_INPUT_REGS + NUM_OUTPUT_REGS) then
-                        axi_rdata(REG_WIDTH-1 downto 0) <= reg_outputs(reg_idx - NUM_INPUT_REGS);
+                        axi_rdata(GPIO_WIDTH-1 downto 0) <= reg_outputs(reg_idx - NUM_INPUT_REGS);
                     end if;
                 elsif s_axi_rready = '1' and axi_rvalid = '1' then
                     axi_rvalid <= '0';

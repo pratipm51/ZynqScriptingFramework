@@ -1,12 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.gpio_types_pkg.all;
 
 entity wishbone_gpio is
     generic (
         NUM_INPUT_REGS   : integer := 2;
         NUM_OUTPUT_REGS  : integer := 2;
-        REG_WIDTH        : integer := 32;
+        GPIO_WIDTH       : integer := 32;
         WB_ADDR_WIDTH    : integer := 32;
         WB_DATA_WIDTH    : integer := 32
     );
@@ -25,33 +26,22 @@ entity wishbone_gpio is
         wb_cyc_i         : in  std_logic;
         wb_ack_o         : out std_logic;
 
-        -- Parallel GPIO ports (flattened 1D arrays)
-        inputs_i         : in  std_logic_vector(NUM_INPUT_REGS * REG_WIDTH - 1 downto 0);
-        outputs_o        : out std_logic_vector(NUM_OUTPUT_REGS * REG_WIDTH - 1 downto 0)
+        -- Parallel GPIO ports (2D unconstrained arrays)
+        inputs_i         : in  gpio_array_t(0 to NUM_INPUT_REGS-1)(GPIO_WIDTH-1 downto 0);
+        outputs_o        : out gpio_array_t(0 to NUM_OUTPUT_REGS-1)(GPIO_WIDTH-1 downto 0)
     );
 end entity wishbone_gpio;
 
 architecture behavioral of wishbone_gpio is
-    -- Internal register arrays
-    type outputs_array_t is array (0 to NUM_OUTPUT_REGS-1) of std_logic_vector(REG_WIDTH-1 downto 0);
-    signal reg_outputs : outputs_array_t := (others => (others => '0'));
-
-    type inputs_array_t is array (0 to NUM_INPUT_REGS-1) of std_logic_vector(REG_WIDTH-1 downto 0);
-    signal reg_inputs : inputs_array_t;
+    -- Internal registers arrays (same size as outputs port)
+    signal reg_outputs : gpio_array_t(0 to NUM_OUTPUT_REGS-1)(GPIO_WIDTH-1 downto 0) := (others => (others => '0'));
 
     signal ack_reg : std_logic := '0';
 begin
     wb_ack_o <= ack_reg;
 
-    -- Map flattened inputs to array
-    gen_inputs: for i in 0 to NUM_INPUT_REGS-1 generate
-        reg_inputs(i) <= inputs_i((i+1)*REG_WIDTH - 1 downto i*REG_WIDTH);
-    end generate gen_inputs;
-
-    -- Map array outputs to flattened vector
-    gen_outputs: for i in 0 to NUM_OUTPUT_REGS-1 generate
-        outputs_o((i+1)*REG_WIDTH - 1 downto i*REG_WIDTH) <= reg_outputs(i);
-    end generate gen_outputs;
+    -- Directly connect outputs port to registers
+    outputs_o <= reg_outputs;
 
     -- Wishbone write/read transactions and ACK logic
     process(wb_clk_i)
@@ -72,17 +62,16 @@ begin
                     if wb_we_i = '0' then
                         wb_dat_o <= (others => '0');
                         if reg_idx >= 0 and reg_idx < NUM_INPUT_REGS then
-                            wb_dat_o(REG_WIDTH-1 downto 0) <= reg_inputs(reg_idx);
+                            wb_dat_o(GPIO_WIDTH-1 downto 0) <= inputs_i(reg_idx);
                         elsif reg_idx >= NUM_INPUT_REGS and reg_idx < (NUM_INPUT_REGS + NUM_OUTPUT_REGS) then
-                            wb_dat_o(REG_WIDTH-1 downto 0) <= reg_outputs(reg_idx - NUM_INPUT_REGS);
+                            wb_dat_o(GPIO_WIDTH-1 downto 0) <= reg_outputs(reg_idx - NUM_INPUT_REGS);
                         end if;
                     -- Write operation
                     else
                         if reg_idx >= NUM_INPUT_REGS and reg_idx < (NUM_INPUT_REGS + NUM_OUTPUT_REGS) then
-                            for byte_idx in 0 to (REG_WIDTH/8)-1 loop
-                                if wb_sel_i(byte_idx) = '1' then
-                                    reg_outputs(reg_idx - NUM_INPUT_REGS)((byte_idx+1)*8 - 1 downto byte_idx*8) <= 
-                                        wb_dat_i((byte_idx+1)*8 - 1 downto byte_idx*8);
+                            for bit_idx in 0 to GPIO_WIDTH-1 loop
+                                if wb_sel_i(bit_idx/8) = '1' then
+                                    reg_outputs(reg_idx - NUM_INPUT_REGS)(bit_idx) <= wb_dat_i(bit_idx);
                                 end if;
                             end loop;
                         end if;

@@ -199,12 +199,13 @@ If you aren't using a soft-CPU, just put your code in `sw/zynq_ps/` (or use `arm
 ### VHDL IP Design Templates (`utilities/hdl_templates/`)
 The framework provides generic, parameterized, and fully synthesizable reference VHDL IP cores for common bus structures:
 
-- **[AXI-Lite GPIO Array](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/axi_gpio.vhd) (`axi_gpio.vhd`)**: Parameterized to instantiate `M` input-only registers and `N` output registers of configurable width (`REG_WIDTH`), mapping inputs to read-only offsets and outputs to read-write offsets.
-- **[Wishbone GPIO Array](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/wishbone_gpio.vhd) (`wishbone_gpio.vhd`)**: Parameterized Wishbone Classic slave register array containing `M` input-only registers and `N` output registers.
+- **[Custom GPIO Types Package](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/gpio_types_pkg.vhd) (`gpio_types_pkg.vhd`)**: A VHDL package declaring the unconstrained 2D array type `gpio_array_t` (requires VHDL-2008). Used to construct non-flattened multi-port array interfaces.
+- **[AXI-Lite GPIO Array](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/axi_gpio.vhd) (`axi_gpio.vhd`)**: Parameterized to instantiate `NUM_INPUT_REGS` input-only registers and `NUM_OUTPUT_REGS` output registers of configurable width (`GPIO_WIDTH`). Uses `gpio_array_t` 2D array ports instead of flattened vectors.
+- **[Wishbone GPIO Array](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/wishbone_gpio.vhd) (`wishbone_gpio.vhd`)**: Parameterized Wishbone Classic slave register array containing input/output ports mapped via `gpio_array_t`.
 - **[AXI-Lite 1-to-N Interconnect Decoder](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/axi_lite_interconnect.vhd) (`axi_lite_interconnect.vhd`)**: Address decoding router routing write and read transaction channels from one AXI-Lite manager to `NUM_SLAVES` subordinate ports based on parameterized base addresses and masks.
 - **[Wishbone 1-to-N Interconnect Decoder](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/wishbone_interconnect.vhd) (`wishbone_interconnect.vhd`)**: Combinatorial shared-bus address decoder routing Wishbone cycles from one master to `NUM_SLAVES` slave interfaces.
 
-These templates utilize flattened arrays for ports (e.g., `NUM_SLAVES * ADDR_WIDTH` sizing) to maintain standard IEEE library compatibility and tool interoperability in older synthesis tool chains.
+*Note: While the GPIO arrays utilize VHDL-2008 2D array port mapping for clean interface connectivity, the interconnect decoders utilize flattened vectors for subordinate ports to maintain tool compatibility (since array interfaces of AXI-Lite bundles are not natively supported in standard VHDL).*
 
 ---
 
