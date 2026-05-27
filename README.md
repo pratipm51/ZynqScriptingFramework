@@ -42,7 +42,7 @@ A professional, version-control-friendly workflow for Xilinx Zynq-7000 SoC devel
 ## 🚀 Quick Start
 
 ### 1. Requirements
-- Vivado/Vitis 2025.2+
+- **Vivado/Vitis 2025.2 only** (the framework utilizes the new Python scripting APIs (`import vitis`) alongside traditional Tcl scripts; older versions are not supported).
 - (Optional) RISC-V toolchain for NeoRV32 support.
 
 ### 2. Initialization

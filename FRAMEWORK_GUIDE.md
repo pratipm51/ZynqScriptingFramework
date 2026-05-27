@@ -6,6 +6,9 @@
 ## 1. Introduction
 This framework provides a structured, version-control-friendly environment for Zynq-7000 FPGA development. It prioritizes **HDL (VHDL, Verilog, or SystemVerilog)** for logic and **C** for software.
 
+> [!IMPORTANT]
+> **Compatibility:** This framework is designed specifically for **Vivado/Vitis 2025.2 only**. It utilizes the new Python scripting APIs (`import vitis`) alongside traditional Tcl scripts for automation and project orchestration. Older versions of Vitis do not support these Python APIs and are incompatible.
+
 ---
 
 ## 2. Directory Structure
