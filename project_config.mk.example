@@ -1,14 +1,22 @@
 # project_config.mk - Project-wide settings
 # These variables will be used by the Makefile automatically.
 
-BOARD = ebaz4205
-PART  = xc7z010clg400-1
+# Target Development Board & Part configuration
+BOARD           = ebaz4205
+PART            = xc7z010clg400-1
 
-# Target language for project and generated wrappers (VHDL or Verilog)
+# Target language for the project and generated wrappers (VHDL or Verilog)
 TARGET_LANGUAGE = VHDL
 
-# Active application component name
-APP = zynq_app
+# Name of the Block Design created inside Vivado (defaults to system)
+BD_NAME         = system
 
-# Name of the Block Design (defaults to system)
-# BD_NAME = system
+# Define all available software applications
+# Format: <shortcut>:<platform_name>:<os> (space-separated)
+APPS            = hello_world:ebaz_plat:standalone my_rtos:ebaz_freertos_plat:freertos
+
+# Set the default application to compile and run if not specified on CLI
+DEFAULT_APP     = hello_world
+
+# Command line override to select active application workspace (optional)
+# APP             = hello_world
