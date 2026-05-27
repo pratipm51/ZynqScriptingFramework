@@ -7,8 +7,8 @@ import glob
 app_name = sys.argv[1] if len(sys.argv) > 1 else ""
 plat_name = sys.argv[2] if len(sys.argv) > 2 else ""
 
-# Framework root is one level up from scripts/
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Framework root is the current directory
+ROOT = os.path.abspath(os.path.dirname(__file__))
 WORKSPACE = os.path.join(ROOT, "vitis_ws")
 
 if not app_name:
@@ -25,21 +25,27 @@ def harvest_app(name):
 
     os.makedirs(dest_dir, exist_ok=True)
     
-    # Sync source and header files
+    # Sync source and header files recursively
     valid_exts = ('.c', '.h', '.cpp', '.hpp', '.s', '.S', '.ld')
     count = 0
-    for f in os.listdir(vitis_src):
-        if f.lower().endswith(valid_exts):
-            src_file = os.path.join(vitis_src, f)
-            dst_file = os.path.join(dest_dir, f)
-            
-            # Ensure dst is writeable
-            if os.path.exists(dst_file):
-                import stat
-                os.chmod(dst_file, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
-            
-            shutil.copy2(src_file, dst_file)
-            count += 1
+    for root_dir, dirs, files in os.walk(vitis_src):
+        for f in files:
+            if f.lower().endswith(valid_exts):
+                src_file = os.path.join(root_dir, f)
+                # Compute relative path from vitis_src
+                rel_path = os.path.relpath(src_file, vitis_src)
+                dst_file = os.path.join(dest_dir, rel_path)
+                
+                # Ensure destination subdirectory exists
+                os.makedirs(os.path.dirname(dst_file), exist_ok=True)
+                
+                # Ensure dst is writeable if it exists
+                if os.path.exists(dst_file):
+                    import stat
+                    os.chmod(dst_file, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
+                
+                shutil.copy2(src_file, dst_file)
+                count += 1
     print(f"   ✅ Synced {count} source files to sw/apps/{name}/")
 
 def harvest_platform(name):

@@ -12,7 +12,7 @@ This framework provides a structured, version-control-friendly environment for Z
 ```text
 /project_root
 ├── src/
-│   ├── hdl/       <-- Your VHDL files (*.vhd, *.vhdl)
+│   ├── hdl/       <-- Your logic files (*.vhd, *.vhdl, *.v, *.sv)
 │   └── constr/    <-- Physical constraints (*.xdc)
 ├── sw/            <-- Software source code
 ├── board_configs/ <-- Your Block Design scripts (*_bd.tcl)
@@ -29,10 +29,10 @@ This framework provides a structured, version-control-friendly environment for Z
 
 This framework strictly follows a **User-First Master Top-Level** approach. 
 
-1. **`top.vhd` (The Master - MANDATORY)**: 
+1. **`top.vhd` / `top.v` (The Master - MANDATORY)**: 
    - This is your project's absolute top-level file and is **required for all designs**.
    - It acts as the permanent anchor for your physical pins (XDC constraints).
-   - **Auto-Bootstrap**: If this file is missing when you click "Sync to Framework" in Vivado, the framework will **automatically create it** for you, pre-filled with the correct Zynq ports.
+   - **Auto-Bootstrap**: If this file is missing when you click "Sync to Framework" in Vivado, the framework will **automatically create it** for you, pre-filled with the correct Zynq ports. It dynamically creates either `top.vhd` or `top.v` depending on whether the design wrapper is VHDL or Verilog.
 2. **The System Wrapper (Instantiated Logic)**: 
    - When you run `make hw`, the framework automatically generates a VHDL wrapper for your Block Design (which defaults to `system.bd` but can be customized with `BD_NAME` in `project_config.mk`).
    - The bootstrapped `top.vhd` is pre-configured to instantiate this wrapper.
@@ -71,7 +71,7 @@ Below is the complete guide to the framework's `Makefile` targets:
 | `make hw` | **Hardware Build:** Runs Vivado in batch mode. Synthesizes VHDL, implements the design, generates the Bitstream, and exports the `.xsa` platform. |
 | `make sw` | **Software Build:** Runs Vitis in batch mode. Creates/updates the platform component and compiles the C application into an `.elf` file. **Now includes auto-update logic for hardware changes.** |
 | `make edit-sw` | **Vitis IDE:** Opens the Vitis Unified IDE for interactive development and testing. Changes made here must be synced back using `make sync-sw`. |
-| `make sync-sw` | **Export:** Harvests files created/modified in the Vitis GUI and copies them back to the framework's `sw/` folders for version control. |
+| `make sync-sw` | **Export:** Harvests files created/modified in the Vitis GUI (recursively scanning all subdirectories) and copies them back to the framework's `sw/` folders for version control, preserving directory hierarchy. |
 | `make delete-sw` | **Cleanup:** Removes the specified application sources and its corresponding Vitis workspace component. |
 | `make all` | **Full Build:** Shortcut for `make hw` followed by `make sw`. |
 | `make` | **Help:** Shows the interactive command menu and current project settings. |
@@ -97,8 +97,8 @@ If your VHDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will 
 
 ## 6. Advanced Features
 
-### External VHDL Libraries (`vhdl_libs.txt`)
-If your project requires external VHDL codebases that must be compiled into specific libraries (e.g., **NeoRV32**), create a file named `vhdl_libs.txt` in your project root. 
+### External HDL Libraries (`vhdl_libs.txt`)
+If your project requires external HDL codebases (VHDL, Verilog, or SystemVerilog) that must be compiled into specific libraries (e.g., **NeoRV32**), create a file named `vhdl_libs.txt` in your project root. 
 
 **Format:** `lib_name:path/to/rtl` (one per line).
 
@@ -109,7 +109,7 @@ custom_lib:./src/custom_rtl
 ```
 
 **Key Features:**
-- **Automatic Detection:** The framework finds all `.vhd` and `.vhdl` files in the specified path.
+- **Automatic Detection:** The framework finds all `.vhd`, `.vhdl`, `.v`, and `.sv` files in the specified path.
 - **Library Mapping:** It uses Vivado's `read_vhdl -library` command to assign the files to the correct namespace.
 - **Path Flexibility:** Supports both **absolute paths** (recommended for shared cores) and **relative paths**.
 

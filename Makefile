@@ -167,10 +167,10 @@ sync-scripts:
 # Discover Zynq ARM hardware parameters and drivers
 list-arm-params:
 	@echo "🔍 Zynq Hardware Parameter Source of Truth:"
-	@find ./vitis_ws/$(BOARD)_plat/export -name "xparameters.h" | head -n 1
+	@find ./vitis_ws/$(REAL_PLAT)/export -name "xparameters.h" | head -n 1
 	@echo ""
 	@echo "📂 Zynq Driver Include Directory:"
-	@find ./vitis_ws/$(BOARD)_plat/export -name "xil_printf.h" | xargs dirname | head -n 1
+	@find ./vitis_ws/$(REAL_PLAT)/export -name "xil_printf.h" | xargs dirname | head -n 1
 
 gui:
 	vivado -mode gui &

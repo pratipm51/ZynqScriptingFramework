@@ -13,8 +13,23 @@ set output_dir "./hw_build/${board_type}"
 set bd_script "./board_configs/${board_type}_bd.tcl"
 file mkdir $output_dir
 
-# --- Helper: Read VHDL files with Order Support ---
-proc read_vhdl_ordered {lib_name path} {
+# --- Helper: Read Source files with Multi-Language and Order Support ---
+proc read_sources {lib_name path} {
+    # 1. Read Verilog (.v)
+    set v_files [glob -nocomplain "$path/*.v"]
+    if {[llength $v_files] > 0} {
+        puts "📦 Reading [llength $v_files] Verilog files into library: $lib_name"
+        read_verilog -library $lib_name $v_files
+    }
+
+    # 2. Read SystemVerilog (.sv)
+    set sv_files [glob -nocomplain "$path/*.sv"]
+    if {[llength $sv_files] > 0} {
+        puts "📦 Reading [llength $sv_files] SystemVerilog files into library: $lib_name"
+        read_verilog -sv -library $lib_name $sv_files
+    }
+
+    # 3. Read VHDL (.vhd, .vhdl) with Order Support
     set order_file "$path/compile_order.txt"
     set vhd_files {}
 
@@ -26,7 +41,14 @@ proc read_vhdl_ordered {lib_name path} {
         foreach line $lines {
             set f [string trim $line]
             if {$f != "" && ![string match "#*" $f]} {
-                lappend vhd_files "$path/$f"
+                set file_ext [file extension $f]
+                if {$file_ext == ".vhd" || $file_ext == ".vhdl"} {
+                    lappend vhd_files "$path/$f"
+                } elseif {$file_ext == ".v"} {
+                    read_verilog -library $lib_name "$path/$f"
+                } elseif {$file_ext == ".sv"} {
+                    read_verilog -sv -library $lib_name "$path/$f"
+                }
             }
         }
     } else {
@@ -45,7 +67,7 @@ proc read_vhdl_ordered {lib_name path} {
     }
 
     if {[llength $vhd_files] > 0} {
-        puts "📦 Reading [llength $vhd_files] files into library: $lib_name"
+        puts "📦 Reading [llength $vhd_files] VHDL files into library: $lib_name"
         read_vhdl -library $lib_name $vhd_files
     }
 }
@@ -78,12 +100,12 @@ foreach lib_entry $lib_entries {
     set lib_name [string trim [lindex $parts 0]]
     set lib_path [string trim [lindex $parts 1]]
     if {$lib_name != "" && $lib_path != ""} {
-        read_vhdl_ordered $lib_name $lib_path
+        read_sources $lib_name $lib_path
     }
 }
 
 # --- Read Local Sources ---
-read_vhdl_ordered xil_defaultlib "./src/hdl"
+read_sources xil_defaultlib "./src/hdl"
 read_xdc "./src/constr/${board_type}.xdc"
 
 # --- Auto-Detect Block Design ---

@@ -19,9 +19,7 @@ proc ::sync_bd { {path ""} } {
     }
     puts "✅ Block Design successfully synced!"
 
-    # --- BOOTSTRAP TOP.VHD ---
-    set top_vhd [file normalize "./src/hdl/top.vhd"]
-    
+    # --- BOOTSTRAP TOP HDL ---
     set bd_files [get_files -quiet *.bd]
     if {$bd_files == ""} {
         puts "⚠️  No Block Design found in project. Skipping bootstrap."
@@ -42,22 +40,27 @@ proc ::sync_bd { {path ""} } {
         set wrapper_entity [file rootname [file tail $wrapper_path]]
         regsub -all $wrapper_entity $content "top" new_content
         
+        # Dynamically determine extension (.vhd or .v) from wrapper
+        set ext [file extension $wrapper_path]
+        set top_file [file normalize "./src/hdl/top${ext}"]
+        set top_name [file tail $top_file]
+
         # Ensure the directory exists
-        file mkdir [file dirname $top_vhd]
+        file mkdir [file dirname $top_file]
         
-        if {[file exists $top_vhd]} {
-            set top_vhd_new "${top_vhd}.new"
-            puts "📝 Existing top.vhd found. Saving new wrapper to: $top_vhd_new"
-            set fp [open $top_vhd_new w]
+        if {[file exists $top_file]} {
+            set top_file_new "${top_file}.new"
+            puts "📝 Existing $top_name found. Saving new wrapper to: $top_file_new"
+            set fp [open $top_file_new w]
             puts $fp $new_content
             close $fp
-            puts "👉 Action required: Compare and merge changes from .new into your top.vhd"
+            puts "👉 Action required: Compare and merge changes from .new into your $top_name"
         } else {
-            puts "🌱 No top.vhd found. Creating initial bootstrap top-level..."
-            set fp [open $top_vhd w]
+            puts "🌱 No $top_name found. Creating initial bootstrap top-level..."
+            set fp [open $top_file w]
             puts $fp $new_content
             close $fp
-            puts "✅ Created bootstrap top-level at: $top_vhd"
+            puts "✅ Created bootstrap top-level at: $top_file"
         }
     }
 }

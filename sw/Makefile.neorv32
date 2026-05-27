@@ -17,7 +17,7 @@ CFLAGS   += $(COMMON_FLAGS) -Wstrict-prototypes
 CXXFLAGS += $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 
 # Path to NeoRV32 common files (Linker script, startup)
-NEO_COMMON = /home/pratip/data/FPGA/neorv32/sw/common
+NEO_COMMON ?= $(abspath ../../neorv32/sw/common)
 
 # Linker flags
 LDFLAGS += -Wl,-T,$(NEO_COMMON)/neorv32.ld -nostartfiles -Wl,--gc-sections
@@ -39,15 +39,30 @@ endif
 # Include paths
 IFLAGS = $(foreach dir,$(INC_DIRS),-I$(dir))
 
+# Object files mapping (incremental compilation support)
+OBJS = $(addsuffix .o, $(basename $(SRC_FILES)))
+
 # Target Output
 TARGET = main.elf
 
 all: $(TARGET)
 
-$(TARGET): $(SRC_FILES)
-	@echo "🔨 Compiling for NeoRV32 (C/C++)..."
-	$(CXX) $(CXXFLAGS) $(IFLAGS) $(SRC_FILES) -o $@ $(LDFLAGS)
+$(TARGET): $(OBJS)
+	@echo "🔗 Linking NeoRV32 executable: $@..."
+	$(CXX) $(COMMON_FLAGS) $(OBJS) -o $@ $(LDFLAGS)
 	$(SIZE) $@
 
+%.o: %.c
+	@echo "🔨 Compiling C source: $<..."
+	$(CC) $(CFLAGS) $(IFLAGS) -c $< -o $@
+
+%.o: %.cpp
+	@echo "🔨 Compiling C++ source: $<..."
+	$(CXX) $(CXXFLAGS) $(IFLAGS) -c $< -o $@
+
+%.o: %.S
+	@echo "🔨 Compiling Assembly: $<..."
+	$(CC) $(COMMON_FLAGS) $(IFLAGS) -c $< -o $@
+
 clean:
-	rm -f $(TARGET) *.o
+	rm -f $(TARGET) $(OBJS)
