@@ -5,6 +5,8 @@
 BOARD ?= my_board
 PART  ?= xc7z010clg400-1
 TARGET_LANGUAGE ?= VHDL
+BD_NAME ?= system
+
 # --- V2 Dynamic Configuration Logic ---
 # Use command line APP if provided, otherwise use DEFAULT_APP from config
 ACTIVE_APP = $(if $(APP),$(APP),$(DEFAULT_APP))
@@ -27,8 +29,8 @@ FSBL_ELF = ./vitis_ws/$(REAL_PLAT)/zynq_fsbl/build/fsbl.elf
 APP_ELF  ?= ./vitis_ws/$(REAL_APP)/build/$(REAL_APP).elf
 ZYNQ_ELF = ./vitis_ws/$(REAL_APP)/build/$(REAL_APP).elf
 PS_INIT  = ./vitis_ws/$(REAL_PLAT)/export/$(REAL_PLAT)/hw/sdt/ps7_init.tcl
-BIT_FILE = ./hw_build/$(BOARD)/system.bit
-HW_XSA   = ./hw_build/$(BOARD)/system.xsa
+BIT_FILE = ./hw_build/$(BOARD)/$(BD_NAME).bit
+HW_XSA   = ./hw_build/$(BOARD)/$(BD_NAME).xsa
 
 .DEFAULT_GOAL := help
 
@@ -59,6 +61,7 @@ help:
 	@echo "Current Project Settings (from project_config.mk):"
 	@echo "  BOARD:           $(BOARD)"
 	@echo "  PART:            $(PART)"
+	@echo "  BD_NAME:         $(BD_NAME)"
 	@echo "  TARGET_LANGUAGE: $(TARGET_LANGUAGE)"
 	@echo "  ACTIVE APP:      $(APP)"
 	@echo ""
@@ -72,9 +75,9 @@ hw:
 		echo "   Please run 'make edit-hw' first to create your hardware design."; \
 		exit 1; \
 	fi
-	@echo "🚀 Building Hardware for $(BOARD) (Part: $(PART))..."
+	@echo "🚀 Building Hardware for $(BOARD) (Part: $(PART), BD: $(BD_NAME))..."
 	rm -rf project_1 myproj clockInfo.txt
-	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD) $(PART) $(TARGET_LANGUAGE)
+	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD) $(PART) $(TARGET_LANGUAGE) $(BD_NAME)
 	rm -f *.log *.jou clockInfo.txt
 
 # Build Software
@@ -84,7 +87,7 @@ sw:
         exit 1; \
     fi
 	@echo "🚀 Ensuring Zynq Platform '$(REAL_PLAT)' and App '$(REAL_APP)' ($(REAL_OS)) are ready..."
-	vitis -s scripts/build_sw.py $(BOARD) $(REAL_APP) $(REAL_PLAT) $(REAL_OS)
+	vitis -s scripts/build_sw.py $(BOARD) $(REAL_APP) $(REAL_PLAT) $(REAL_OS) $(BD_NAME)
 
 # GUI Workflow: Open Vitis for interactive development
 edit-sw: sw

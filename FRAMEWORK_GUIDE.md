@@ -34,10 +34,10 @@ This framework strictly follows a **User-First Master Top-Level** approach.
    - It acts as the permanent anchor for your physical pins (XDC constraints).
    - **Auto-Bootstrap**: If this file is missing when you click "Sync to Framework" in Vivado, the framework will **automatically create it** for you, pre-filled with the correct Zynq ports.
 2. **The System Wrapper (Instantiated Logic)**: 
-   - When you run `make hw`, the framework automatically generates a VHDL wrapper for your Block Design (named `system.bd`).
+   - When you run `make hw`, the framework automatically generates a VHDL wrapper for your Block Design (which defaults to `system.bd` but can be customized with `BD_NAME` in `project_config.mk`).
    - The bootstrapped `top.vhd` is pre-configured to instantiate this wrapper.
-   - **Versioning Note**: The framework automatically detects the correct entity name for your version (typically `system` in 2025.2+, or `system_wrapper` in older versions) during the bootstrapping process.
-3. **Naming Convention**: Your Block Design **must** be named `system` for the automation to work correctly.
+   - **Versioning Note**: The framework automatically detects the correct entity name for your version (typically matching your block design's name, e.g., `system` in 2025.2+, or `system_wrapper` in older versions) during the bootstrapping process.
+3. **Naming Convention**: Your Block Design defaults to being named `system`, but you can customize it dynamically using the `BD_NAME` variable in `project_config.mk`.
 
 ---
 
@@ -48,11 +48,11 @@ This framework strictly follows a **User-First Master Top-Level** approach.
 Since every Zynq board is different, the framework does not include a default Block Design. Follow these steps to initialize your project:
 
 1. **Construct/Open**: Run `make edit-hw`.
-2. **Create Design**: Create a Block Design named **`system`**.
+2. **Create Design**: Create a Block Design (defaults to `system`, or use your custom name configured via `BD_NAME`).
 3. **Configure**: Add the **Zynq7 Processing System** IP. Run "Block Automation" (which applies board-specific presets if available).
 4. **Port Synchronization (Auto-Bootstrap)**:
    - For **new projects**: Simply click the **"Sync to Framework"** button on the top toolbar. The framework will automatically create `src/hdl/top.vhd` for you with the correct ports.
-   - For **existing projects**: If you change ports in the Block Design, you must manually update the `component` declaration in your `src/hdl/top.vhd` to match. (Right-click `system.bd` -> "Create HDL Wrapper" to see the updated port list).
+   - For **existing projects**: If you change ports in the Block Design, you must manually update the `component` declaration in your `src/hdl/top.vhd` to match. (Right-click `<your_bd_name>.bd` -> "Create HDL Wrapper" to see the updated port list).
 5. **Freeze to Script**:
    - The "Sync to Framework" button also saves your Block Design to `board_configs/${BOARD}_bd.tcl`.
    - **OR** run this command in the Tcl Console:
@@ -149,12 +149,13 @@ For complex designs with multiple packages and dependencies, you can control the
 
 ## 7. Global Configuration (`project_config.mk`)
 
-Instead of passing `BOARD` and `PART` on the command line every time, you can create a file named **`project_config.mk`** in the root of your project.
+Instead of passing configuration values on the command line every time, you can create a file named **`project_config.mk`** in the root of your project.
 
 **Format:**
 ```make
-BOARD = ebaz4205
-PART  = xc7z010clg400-1
+BOARD   = ebaz4205
+PART    = xc7z010clg400-1
+BD_NAME = system
 ```
 
 The framework will automatically read this file and use these values as the defaults for all commands.

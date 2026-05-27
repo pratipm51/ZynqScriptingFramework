@@ -2,6 +2,7 @@
 set board_type [lindex $argv 0]
 set part [lindex $argv 1]
 set target_lang [lindex $argv 2]
+set bd_name [lindex $argv 3]
 
 if {$part == ""} {
     puts "❌ Error: No FPGA part specified. Pass it as the second argument."
@@ -108,6 +109,15 @@ if {[file exists $bd_script]} {
     }
     puts "📂 Using Block Design: $bd_file"
 
+    # Dynamic fallback for bd_name if not provided
+    if {$bd_name == ""} {
+        if {$bd_design != ""} {
+            set bd_name [get_property NAME $bd_design]
+        } else {
+            set bd_name [file rootname [file tail $bd_file]]
+        }
+    }
+
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
     puts "📦 Generated Wrapper: $wrapper_file"
@@ -124,6 +134,12 @@ opt_design
 place_design
 route_design
 
+if {$bd_name == ""} {
+    set bd_name "system"
+}
+
 # 4. Export Hardware
-write_hw_platform -fixed -force -file "$output_dir/system.xsa"
-write_bitstream -force "$output_dir/system.bit"
+puts "📂 Exporting Hardware Platform to: $output_dir/${bd_name}.xsa"
+write_hw_platform -fixed -force -file "$output_dir/${bd_name}.xsa"
+puts "📂 Exporting Bitstream to: $output_dir/${bd_name}.bit"
+write_bitstream -force "$output_dir/${bd_name}.bit"

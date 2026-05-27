@@ -9,3 +9,6 @@ TARGET_LANGUAGE = VHDL
 
 # Active application component name
 APP = zynq_app
+
+# Name of the Block Design (defaults to system)
+# BD_NAME = system

@@ -5,17 +5,18 @@ import time
 import shutil
 import glob
 
-# Arguments from Makefile: board, app_name, plat_name, os_arg
+# Arguments from Makefile: board, app_name, plat_name, os_arg, bd_name
 board = sys.argv[1] if len(sys.argv) > 1 else "ebaz"
 app_name = sys.argv[2] if len(sys.argv) > 2 else "zynq_app"
 plat_name = sys.argv[3] if len(sys.argv) > 3 else f"{board}_standalone_plat"
 os_arg = sys.argv[4] if len(sys.argv) > 4 else "standalone"
+bd_name = sys.argv[5] if len(sys.argv) > 5 else "system"
 
 # Normalize OS names
 os_map = {"standalone": "standalone", "freertos": "freertos", "freertos10_xilinx": "freertos"}
 os_type = os_map.get(os_arg.lower(), os_arg)
 
-XSA_PATH = os.path.abspath(f"./hw_build/{board}/system.xsa")
+XSA_PATH = os.path.abspath(f"./hw_build/{board}/{bd_name}.xsa")
 WORKSPACE = os.path.abspath(f"./vitis_ws")
 SAVED_PLAT_DIR = os.path.abspath("./sw/platforms")
 SAVED_APP_ROOT = os.path.abspath("./sw/apps")
