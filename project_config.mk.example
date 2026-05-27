@@ -15,8 +15,12 @@ BD_NAME         = system
 # Format: <shortcut>:<platform_name>:<os> (space-separated)
 APPS            = hello_world:ebaz_plat:standalone my_rtos:ebaz_freertos_plat:freertos
 
-# Set the default application to compile and run if not specified on CLI
+# The default application shortcut to compile and run when running 'make sw' 
+# or 'make run' without specifying a target. This must match one of the 
+# shortcut names defined in the 'APPS' list above.
 DEFAULT_APP     = hello_world
 
-# Command line override to select active application workspace (optional)
+# Active application override. If uncommented here, it overrides DEFAULT_APP 
+# project-wide. You can also override this on the command line for a single 
+# command run, e.g. 'make sw APP=my_rtos' or 'make run APP=my_rtos'.
 # APP             = hello_world
