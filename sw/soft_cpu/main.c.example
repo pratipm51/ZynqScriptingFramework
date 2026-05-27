@@ -1,0 +1,20 @@
+#include <neorv32.h>
+
+// NeoRV32 soft-CPU example application
+int main() {
+    // Clear GPIO outputs
+    neorv32_gpio_port_set(0);
+    
+    // Configure UART0 for print statements (baud rate: 19200)
+    neorv32_uart0_setup(19200, ~0);
+    
+    neorv32_uart0_puts("\r\n--- NeoRV32 Soft-CPU Active ---\r\n");
+
+    while (1) {
+        // Toggle GPIO pin 0 (typically connected to an LED)
+        neorv32_gpio_pin_toggle(0);
+        neorv32_uart0_puts("Soft-CPU Heartbeat...\r\n");
+        neorv32_cpu_delay_ms(1000);
+    }
+    return 0;
+}

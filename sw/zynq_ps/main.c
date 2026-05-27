@@ -11,7 +11,7 @@ int main()
     sleep(2);
 
     while(1) {
-        xil_printf("🚀 Zynq VHDL Template Application Running (UART Loop)...\n\r");
+        xil_printf("🚀 Zynq HDL Template Application Running (UART Loop)...\n\r");
         sleep(1);
     }
 

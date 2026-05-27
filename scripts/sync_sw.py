@@ -33,13 +33,15 @@ for comp in components:
 
     vitis_src = os.path.join(WORKSPACE, comp, "src")
     
-    # Destination directory: sw/<comp>
-    # Special case for legacy 'zynq_app' if no directory exists yet
-    dest_dir = os.path.join(ROOT, "sw", comp)
-    
-    # Handle legacy 'sw/arm' if comp is 'zynq_app' and 'sw/arm' already exists
-    if comp == "zynq_app" and os.path.exists(os.path.join(ROOT, "sw/arm")):
-        dest_dir = os.path.join(ROOT, "sw/arm")
+    # Determine destination directory
+    if comp == "zynq_app":
+        dest_dir = os.path.join(ROOT, "sw", "zynq_ps")
+    else:
+        # Save other apps in sw/zynq_ps/<comp> if the zynq_ps folder exists
+        if os.path.exists(os.path.join(ROOT, "sw", "zynq_ps")):
+            dest_dir = os.path.join(ROOT, "sw", "zynq_ps", comp)
+        else:
+            dest_dir = os.path.join(ROOT, "sw", comp)
 
     if not os.path.exists(dest_dir):
         print(f"🌱 Creating new directory: {dest_dir}")

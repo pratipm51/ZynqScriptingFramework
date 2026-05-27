@@ -108,8 +108,8 @@ sync-sw:
 # Safely delete a software application
 delete-sw:
 	@echo "🗑️  Deleting application '$(APP_NAME)'..."
-	@if [ "$(APP_NAME)" = "zynq_app" ] && [ -d sw/arm ]; then \
-		rm -rf sw/arm; \
+	@if [ "$(APP_NAME)" = "zynq_app" ] && [ -d sw/zynq_ps ]; then \
+		rm -rf sw/zynq_ps; \
 	elif [ -d sw/$(APP_NAME) ]; then \
 		rm -rf sw/$(APP_NAME); \
 	fi

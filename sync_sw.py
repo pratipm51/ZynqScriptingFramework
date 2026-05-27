@@ -17,7 +17,13 @@ if not app_name:
 
 def harvest_app(name):
     vitis_src = os.path.join(WORKSPACE, name, "src")
-    dest_dir = os.path.join(ROOT, "sw", "apps", name)
+    if name == "zynq_app":
+        dest_dir = os.path.join(ROOT, "sw", "zynq_ps")
+    else:
+        if os.path.exists(os.path.join(ROOT, "sw", "zynq_ps")):
+            dest_dir = os.path.join(ROOT, "sw", "zynq_ps", name)
+        else:
+            dest_dir = os.path.join(ROOT, "sw", "apps", name)
 
     if not os.path.exists(vitis_src):
         print(f"⚠️  App source not found in Vitis workspace: {vitis_src}")

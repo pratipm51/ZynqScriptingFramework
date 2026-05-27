@@ -2,5 +2,5 @@
 # Use this to customize the PS side (e.g. Ethernet drivers, PL bridge logic)
 # Format: one directory path per line
 # Example:
-# ./sw/arm
+# ./sw/zynq_ps
 # ../shared_arm_libs

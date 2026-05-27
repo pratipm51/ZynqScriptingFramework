@@ -15,6 +15,8 @@ This framework provides a structured, version-control-friendly environment for Z
 │   ├── hdl/       <-- Your logic files (*.vhd, *.vhdl, *.v, *.sv)
 │   └── constr/    <-- Physical constraints (*.xdc)
 ├── sw/            <-- Software source code
+│   ├── zynq_ps/   <-- Zynq PS (Cortex-A9 ARM) application sources
+│   └── soft_cpu/  <-- Soft-CPU (NeoRV32 RISC-V) application sources
 ├── board_configs/ <-- Your Block Design scripts (*_bd.tcl)
 ├── scripts/       <-- The framework engine (Automation scripts)
 ├── utilities/     <-- Standalone tools (Uploader, etc.)
@@ -168,24 +170,24 @@ This framework supports true **Dual-CPU** development, where you can have custom
 
 ### Case A: Custom Soft-CPU (PL) Only
 If you only care about the soft-CPU:
-1. Create `sw/Makefile` (see template at `sw/Makefile.neorv32`).
-2. The framework will still build a Vitis "Platform" (to handle Zynq clocks/DDR init) but will use your Makefile for the main app.
-3. Set `APP_ELF = sw/main.elf` in your project `Makefile`.
+1. Put your soft-CPU code in `sw/soft_cpu/` and configure the Makefile at [sw/soft_cpu/Makefile](file:///home/pratip/data/FPGA/ZynqScriptingFramework/sw/soft_cpu/Makefile).
+2. The framework will still build a Vitis "Platform" (to handle Zynq clocks/DDR init) but will use your soft-CPU Makefile for the main app.
+3. Set `APP_ELF = sw/soft_cpu/main.elf` in your project `Makefile`.
 4. **Custom Targets**: You can pass specific targets to your software Makefile using the `SW_TARGET` variable (e.g., `make sw SW_TARGET=clean`).
 
 ### Case B: Custom ARM (PS) + Custom Soft-CPU (PL)
 If you want to customize the Zynq side (e.g., for Ethernet drivers) while also running a soft-CPU:
-1. **Soft-CPU**: Define its build in `sw/Makefile` and `sw_sources.txt`.
-2. **ARM core**: Create a directory (e.g., **`sw/arm/`**) and list it in **`arm_sources.txt`**.
-3. **Template**: A minimal ARM manager template is available at `sw/arm/main.c.example`.
+1. **Soft-CPU**: Define its build in `sw/soft_cpu/Makefile` and `sw_sources.txt`.
+2. **ARM core**: Create a directory (e.g., **`sw/zynq_ps/`**) and list it in **`arm_sources.txt`**.
+3. **Template**: A minimal ARM manager template is available at [sw/zynq_ps/main.c.example](file:///home/pratip/data/FPGA/ZynqScriptingFramework/sw/zynq_ps/main.c.example).
 4. The framework will build **two separate ELFs** and load both of them automatically during `make run`.
 
 **Note on C++ Support**: 
-- **ARM side**: Vitis natively supports C++. Just add `.cpp` files to your ARM directory.
-- **Soft-CPU side**: Supported if your custom Makefile is configured for it. See the updated `sw/Makefile.neorv32` for a template that handles both C and C++ (.cpp) files.
+- **ARM side**: Vitis natively supports C++. Just add `.cpp` files to your Zynq PS directory.
+- **Soft-CPU side**: Supported if your custom Makefile is configured for it. See the updated [sw/soft_cpu/Makefile](file:///home/pratip/data/FPGA/ZynqScriptingFramework/sw/soft_cpu/Makefile) for a template that handles both C and C++ (.cpp) files.
 
 ### Case C: ARM Only (Standard Zynq)
-If you aren't using a soft-CPU, just put your code in `sw/` (or use `arm_sources.txt`). The framework defaults to the standard Vitis ARM build flow.
+If you aren't using a soft-CPU, just put your code in `sw/zynq_ps/` (or use `arm_sources.txt`). The framework defaults to the standard Vitis ARM build flow.
 
 ---
 

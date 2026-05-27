@@ -23,16 +23,17 @@ A professional, version-control-friendly workflow for Xilinx Zynq-7000 SoC devel
 ```text
 /project_root
 ├── src/
-│   ├── hdl/           <-- Your VHDL files
+│   ├── hdl/           <-- Your logic files (VHDL, Verilog, etc.)
 │   └── constr/        <-- Physical constraints (*.xdc)
 ├── sw/                <-- Software source code
-│   └── arm/           <-- (Optional) Dedicated Zynq ARM code
+│   ├── zynq_ps/       <-- Zynq PS (Cortex-A9 ARM) application sources
+│   └── soft_cpu/      <-- Soft-CPU (NeoRV32 RISC-V) application sources
 ├── board_configs/     <-- Block Design scripts (*_bd.tcl)
 ├── utilities/         <-- Standalone tools (Uploader, etc.)
 ├── scripts/           <-- The Framework Engine
-├── vhdl_libs.txt      <-- Configure external VHDL libraries
+├── vhdl_libs.txt      <-- Configure external HDL libraries
 ├── sw_sources.txt     <-- Configure Soft-CPU source directories
-├── arm_sources.txt    <-- Configure Zynq ARM source directories
+├── arm_sources.txt    <-- Configure Zynq PS source directories
 └── Makefile           <-- The Command Center
 ```
 

@@ -79,7 +79,12 @@ else:
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
 
 # 2. Application Component
-src_dir = os.path.join(SAVED_APP_ROOT, app_name)
+if app_name == "zynq_app":
+    src_dir = os.path.abspath("./sw/zynq_ps")
+else:
+    src_dir = os.path.abspath(f"./sw/zynq_ps/{app_name}")
+    if not os.path.exists(src_dir):
+        src_dir = os.path.abspath(f"./sw/{app_name}")
 
 if os.path.exists(src_dir):
     if not os.path.exists(os.path.join(WORKSPACE, app_name)):

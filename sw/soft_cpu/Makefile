@@ -17,7 +17,7 @@ CFLAGS   += $(COMMON_FLAGS) -Wstrict-prototypes
 CXXFLAGS += $(COMMON_FLAGS) -fno-exceptions -fno-rtti
 
 # Path to NeoRV32 common files (Linker script, startup)
-NEO_COMMON ?= $(abspath ../../neorv32/sw/common)
+NEO_COMMON ?= $(abspath ../../../neorv32/sw/common)
 
 # Linker flags
 LDFLAGS += -Wl,-T,$(NEO_COMMON)/neorv32.ld -nostartfiles -Wl,--gc-sections
@@ -25,7 +25,7 @@ LDFLAGS += -Wl,-T,$(NEO_COMMON)/neorv32.ld -nostartfiles -Wl,--gc-sections
 LDFLAGS += -Wl,--defsym=__neorv32_rom_size=32k -Wl,--defsym=__neorv32_ram_size=32k
 
 # Find all sources using sw_sources.txt
-SW_SOURCES_FILE = ../sw_sources.txt
+SW_SOURCES_FILE = ../../sw_sources.txt
 INC_DIRS = . $(NEO_COMMON)
 SRC_FILES = $(wildcard *.c) $(wildcard *.cpp) $(NEO_COMMON)/crt0.S
 

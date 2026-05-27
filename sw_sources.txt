@@ -1,6 +1,6 @@
 # sw_sources.txt - List software source and include directories here
 # Format: one directory path per line
 # Example:
-# ./sw
+# ./sw/soft_cpu
 # ../shared_lib/src
-./sw
+./sw/soft_cpu
