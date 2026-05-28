@@ -99,8 +99,9 @@ begin
             if s_axi_aresetn = '0' then
                 reg_outputs <= (others => (others => '0'));
             else
-                if axi_awready = '1' and axi_wready = '1' then
-                    reg_idx := to_integer(unsigned(awaddr_reg(AXI_ADDR_WIDTH-1 downto ADDR_LSB)));
+                -- Write on the handshake cycle (when valid is first asserted and we are not already busy)
+                if axi_awready = '0' and axi_wready = '0' and s_axi_m2s.awvalid = '1' and s_axi_m2s.wvalid = '1' then
+                    reg_idx := to_integer(unsigned(s_axi_m2s.awaddr(AXI_ADDR_WIDTH-1 downto ADDR_LSB)));
                     -- Write only to output register offsets
                     if reg_idx >= NUM_INPUT_REGS and reg_idx < (NUM_INPUT_REGS + NUM_OUTPUT_REGS) then
                         for bit_idx in 0 to GPIO_WIDTH-1 loop
@@ -157,7 +158,8 @@ begin
                 axi_rvalid <= '0';
                 axi_rdata  <= (others => '0');
             else
-                if axi_arready = '1' and s_axi_m2s.arvalid = '1' and axi_rvalid = '0' then
+                -- Respond once the address is accepted (axi_arready = '1')
+                if axi_arready = '1' and axi_rvalid = '0' then
                     axi_rvalid <= '1';
                     reg_idx := to_integer(unsigned(araddr_reg(AXI_ADDR_WIDTH-1 downto ADDR_LSB)));
                     
