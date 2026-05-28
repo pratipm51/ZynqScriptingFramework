@@ -85,6 +85,9 @@ else:
     src_dir = os.path.abspath(f"./sw/zynq_ps/{app_name}")
     if not os.path.exists(src_dir):
         src_dir = os.path.abspath(f"./sw/{app_name}")
+    # Fallback to base zynq_ps folder if app-specific directory does not exist
+    if not os.path.exists(src_dir):
+        src_dir = os.path.abspath("./sw/zynq_ps")
 
 if os.path.exists(src_dir):
     if not os.path.exists(os.path.join(WORKSPACE, app_name)):
