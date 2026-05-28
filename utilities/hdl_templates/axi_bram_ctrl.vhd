@@ -65,7 +65,7 @@ begin
     s_axi_s2m.bresp   <= "00"; -- OKAY response
     s_axi_s2m.bvalid  <= axi_bvalid;
     s_axi_s2m.arready <= axi_arready;
-    s_axi_s2m.rdata   <= axi_rdata;
+    s_axi_s2m.rdata   <= bram_rddata when (BRAM_MODE = "READ_WRITE" or BRAM_MODE = "READ_ONLY") else (others => '0');
     s_axi_s2m.rresp   <= "00"; -- OKAY response
     s_axi_s2m.rvalid  <= axi_rvalid;
 
