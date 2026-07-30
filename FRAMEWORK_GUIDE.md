@@ -167,11 +167,36 @@ Copy `BOOT.BIN` to an SD card, or use `make load-ram` plus U-Boot, to boot witho
 
 ---
 
-## 6. Troubleshooting: Why isn't my PL logic running?
+## 6. Troubleshooting
+
+### Why isn't my PL logic running?
 
 If your HDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will not run** by simply flashing the bitstream with `make program`. 
 
 **The Zynq PS clocks are disabled by default on power-up.** You must run `make run` to execute the PS initialization (via `ps7_init.tcl`), which enables the clocks and resets the PL logic.
+
+---
+
+### Platform build fails after modifying the Block Design (e.g. `undefined reference to XTime_GetTime`)
+
+If you go back into `make edit-hw`, add/change an IP block (e.g. enabling a timer like TTC0), run `make hw` again, and then `make edit-sw`/`make sw` fails while **rebuilding the platform** (not your application) with linker errors like:
+
+```
+undefined reference to `XTime_GetTime'
+undefined reference to `XilSleepTimer_Init'
+```
+
+**Why this happens:** when a Vitis platform component already exists in `vitis_ws/`, the framework updates it *incrementally* (`platform.update_hw()` + rebuild) rather than recreating it from scratch. Some BSP settings default to `Default`/`Auto` (most commonly the `xiltimer` sleep/tick timer source). Adding a new candidate resource — like a TTC — can change how that auto-resolution behaves under the hood without the incremental update path fully re-running it, leaving the platform (and especially the FSBL, which has its own separate BSP config) linked against timer functions that never got compiled in.
+
+This isn't unique to timers — any BD change that could plausibly shift an `Default`/`Auto`-resolved resource (timer source, stdin/stdout UART, interrupt controller assumptions) carries the same risk. Peripherals that don't compete for one of those "default" roles (typical Ethernet/I2C/SPI/GPIO additions) are much lower risk.
+
+**Fix - regenerate the platform from scratch:**
+1. Make sure Vitis is fully closed (check for lingering `vitis-ide`/`vitis-server`/`clangd` processes — closing the window doesn't always kill them).
+2. Delete the stale platform directory: `rm -rf vitis_ws/${PLATFORM_NAME}` (e.g. `vitis_ws/Zynq_Bajie_standalone_plat`). Your application component(s) elsewhere in `vitis_ws/` don't need to be touched.
+3. If `sw/platforms/${PLATFORM_NAME}.yaml` exists (a saved BSP config from a previous `sync-sw`-style export), check it doesn't still contain the stale `Default` setting before it gets re-merged into the fresh platform.
+4. Run `make edit-sw` again. This triggers a full `create_platform_component()` instead of an incremental update, forcing all BSP/timer auto-resolution to run fresh against the current hardware.
+
+**Alternative (avoids full regeneration):** explicitly pin the ambiguous setting instead of leaving it on `Default`. In Vitis, right-click the platform component → **Board Support Package Settings** → set `XILTIMER_sleep_timer` (and `XILTIMER_tick_timer` if used) to the specific instance you added (e.g. `ps7_ttc_0`). Do this for both the main platform's BSP settings and the FSBL's own separate BSP settings if the FSBL build is the one failing.
 
 ---
 
