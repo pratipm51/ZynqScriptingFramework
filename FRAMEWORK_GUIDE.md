@@ -398,6 +398,26 @@ You can manage different operating systems (Standalone vs. FreeRTOS) directly vi
 
 **Note:** The framework creates separate platform components for each OS (e.g., `board_standalone_plat` and `board_freertos_plat`). This ensures that switching between OS types is instant and does not require a full rebuild of the other platform.
 
+### Multiple Platforms Per Board
+The `<shortcut>:<platform_name>:<os>` format in `APPS` isn't limited to one platform per board/OS pair — you can point different apps at entirely different platform names to give each one its own isolated BSP configuration:
+
+```make
+APPS = hello_world:Zynq_Bajie_standalone_plat:standalone eth_server:Zynq_Bajie_lwip_plat:standalone
+```
+
+**Why you'd want this:** BSP-level settings (enabled libraries like `lwip220`, `xiltimer` sleep/tick source, stdin/stdout, etc.) live on the *platform* component, not the app. If `eth_server` needs lwIP and different timer settings, building it against the same platform as `hello_world` would apply those changes to `hello_world` too. Giving it its own platform (`Zynq_Bajie_lwip_plat`) isolates the change — configure that platform's Board Support Package Settings independently in Vitis without touching any other app's platform.
+
+Running `make edit-sw APP=eth_server` (with a matching `APPS` entry) creates `Zynq_Bajie_lwip_plat` fresh the first time, since it doesn't exist yet in `vitis_ws/`.
+
+### Adding Apps Whose Name You Don't Know Yet (Vitis Templates)
+`make edit-sw` never reads the app-shortcut part of the `APPS` tuple — only the platform name and OS. That means you don't need to know your new app's final name before running `make edit-sw`; you only need *some* `APPS` entry so `APP=<shortcut>` can resolve the right platform:
+
+1. Add a placeholder entry: `APPS = ... placeholder:Zynq_Bajie_lwip_plat:standalone`.
+2. `make edit-sw APP=placeholder` — ensures/creates `Zynq_Bajie_lwip_plat` and opens Vitis.
+3. In Vitis, create the app from whatever template you want (e.g. **Create Application Component → From Template → lwip_echo_server**) and let Vitis name it however it wants. Don't try to rename a Vitis component after creation — it's known to cause issues.
+4. Check the real component name (`ls vitis_ws/` or the Vitis component list), then edit `project_config.mk` so the `APPS` shortcut matches that name exactly.
+5. Only then run `make sync-sw` / `make sw` / `make run` — these all key off the `APPS` shortcut to locate `vitis_ws/<shortcut>/`, so it must match before they're used.
+
 ---
 
 ## 12. Git Best Practices
