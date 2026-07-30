@@ -27,6 +27,7 @@
 !*.tcl
 !*.xdc
 !*.example
+!*.zybo_z7
 !sw/Makefile*
 
 # 4. Explicitly ignore build artifacts

@@ -1,0 +1,375 @@
+--Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+--Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------
+--Tool Version: Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+--Date        : Wed May 27 13:22:14 2026
+--Host        : desktop running 64-bit Linux Mint 22.1
+--Command     : generate_target top.bd
+--Design      : top
+--Purpose     : IP block netlist
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+use work.bus_types_pkg.all;
+
+library UNISIM;
+use UNISIM.VCOMPONENTS.ALL;
+
+entity top is
+  port (
+    DDR_addr : inout STD_LOGIC_VECTOR ( 14 downto 0 );
+    DDR_ba : inout STD_LOGIC_VECTOR ( 2 downto 0 );
+    DDR_cas_n : inout STD_LOGIC;
+    DDR_ck_n : inout STD_LOGIC;
+    DDR_ck_p : inout STD_LOGIC;
+    DDR_cke : inout STD_LOGIC;
+    DDR_cs_n : inout STD_LOGIC;
+    DDR_dm : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_dq : inout STD_LOGIC_VECTOR ( 31 downto 0 );
+    DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_odt : inout STD_LOGIC;
+    DDR_ras_n : inout STD_LOGIC;
+    DDR_reset_n : inout STD_LOGIC;
+    DDR_we_n : inout STD_LOGIC;
+    FIXED_IO_ddr_vrn : inout STD_LOGIC;
+    FIXED_IO_ddr_vrp : inout STD_LOGIC;
+    FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
+    FIXED_IO_ps_clk : inout STD_LOGIC;
+    FIXED_IO_ps_porb : inout STD_LOGIC;
+    FIXED_IO_ps_srstb : inout STD_LOGIC;
+    adc_data_in : in STD_LOGIC_VECTOR ( 7 downto 0 );
+    dso_clk_out : out STD_LOGIC
+  );
+end top;
+
+architecture STRUCTURE of top is
+  component system is
+  port (
+    FCLK_CLK0 : out STD_LOGIC;
+    FCLK_CLK1 : out STD_LOGIC;
+    FCLK_RESET1_N : out STD_LOGIC;
+    FCLK_RESET0_N : out STD_LOGIC;
+    DDR_cas_n : inout STD_LOGIC;
+    DDR_cke : inout STD_LOGIC;
+    DDR_ck_n : inout STD_LOGIC;
+    DDR_ck_p : inout STD_LOGIC;
+    DDR_cs_n : inout STD_LOGIC;
+    DDR_reset_n : inout STD_LOGIC;
+    DDR_odt : inout STD_LOGIC;
+    DDR_ras_n : inout STD_LOGIC;
+    DDR_we_n : inout STD_LOGIC;
+    DDR_ba : inout STD_LOGIC_VECTOR ( 2 downto 0 );
+    DDR_addr : inout STD_LOGIC_VECTOR ( 14 downto 0 );
+    DDR_dm : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_dq : inout STD_LOGIC_VECTOR ( 31 downto 0 );
+    DDR_dqs_n : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    DDR_dqs_p : inout STD_LOGIC_VECTOR ( 3 downto 0 );
+    FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
+    FIXED_IO_ddr_vrn : inout STD_LOGIC;
+    FIXED_IO_ddr_vrp : inout STD_LOGIC;
+    FIXED_IO_ps_srstb : inout STD_LOGIC;
+    FIXED_IO_ps_clk : inout STD_LOGIC;
+    FIXED_IO_ps_porb : inout STD_LOGIC;
+    M_AXI_GP0_0_arvalid : out STD_LOGIC;
+    M_AXI_GP0_0_awvalid : out STD_LOGIC;
+    M_AXI_GP0_0_bready : out STD_LOGIC;
+    M_AXI_GP0_0_rready : out STD_LOGIC;
+    M_AXI_GP0_0_wlast : out STD_LOGIC;
+    M_AXI_GP0_0_wvalid : out STD_LOGIC;
+    M_AXI_GP0_0_arid : out STD_LOGIC_VECTOR ( 11 downto 0 );
+    M_AXI_GP0_0_awid : out STD_LOGIC_VECTOR ( 11 downto 0 );
+    M_AXI_GP0_0_wid : out STD_LOGIC_VECTOR ( 11 downto 0 );
+    M_AXI_GP0_0_arburst : out STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_GP0_0_arlock : out STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_GP0_0_arsize : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_GP0_0_awburst : out STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_GP0_0_awlock : out STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_GP0_0_awsize : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_GP0_0_arprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_GP0_0_awprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
+    M_AXI_GP0_0_araddr : out STD_LOGIC_VECTOR ( 31 downto 0 );
+    M_AXI_GP0_0_awaddr : out STD_LOGIC_VECTOR ( 31 downto 0 );
+    M_AXI_GP0_0_wdata : out STD_LOGIC_VECTOR ( 31 downto 0 );
+    M_AXI_GP0_0_arcache : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_GP0_0_arlen : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_GP0_0_arqos : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_GP0_0_awcache : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_GP0_0_awlen : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_GP0_0_awqos : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_GP0_0_wstrb : out STD_LOGIC_VECTOR ( 3 downto 0 );
+    M_AXI_GP0_0_arready : in STD_LOGIC;
+    M_AXI_GP0_0_awready : in STD_LOGIC;
+    M_AXI_GP0_0_bvalid : in STD_LOGIC;
+    M_AXI_GP0_0_rlast : in STD_LOGIC;
+    M_AXI_GP0_0_rvalid : in STD_LOGIC;
+    M_AXI_GP0_0_wready : in STD_LOGIC;
+    M_AXI_GP0_0_bid : in STD_LOGIC_VECTOR ( 11 downto 0 );
+    M_AXI_GP0_0_rid : in STD_LOGIC_VECTOR ( 11 downto 0 );
+    M_AXI_GP0_0_bresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_GP0_0_rresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
+    M_AXI_GP0_0_rdata : in STD_LOGIC_VECTOR ( 31 downto 0 )
+  );
+  end component system;
+
+  -- AXI Clocks and Resets (driven by FCLK_CLK0 and FCLK_RESET0_N)
+  signal clk_axi_internal   : std_logic;
+  signal rst_n_axi_internal : std_logic;
+
+  -- DSO Clocks and Resets (driven by FCLK_CLK1 and FCLK_RESET1_N)
+  signal clk_dso_internal   : std_logic;
+  signal rst_n_dso_internal : std_logic;
+
+  -- AXI signals internal connection from system instance
+  signal system_axi_awaddr  : std_logic_vector(31 downto 0);
+  signal system_axi_awprot  : std_logic_vector(2 downto 0);
+  signal system_axi_awvalid : std_logic;
+  signal system_axi_awready : std_logic;
+  signal system_axi_wdata   : std_logic_vector(31 downto 0);
+  signal system_axi_wstrb   : std_logic_vector(3 downto 0);
+  signal system_axi_wvalid  : std_logic;
+  signal system_axi_wready  : std_logic;
+  signal system_axi_bresp   : std_logic_vector(1 downto 0);
+  signal system_axi_bvalid  : std_logic;
+  signal system_axi_bready  : std_logic;
+  signal system_axi_araddr  : std_logic_vector(31 downto 0);
+  signal system_axi_arprot  : std_logic_vector(2 downto 0);
+  signal system_axi_arvalid : std_logic;
+  signal system_axi_arready : std_logic;
+  signal system_axi_rdata   : std_logic_vector(31 downto 0);
+  signal system_axi_rresp   : std_logic_vector(1 downto 0);
+  signal system_axi_rvalid  : std_logic;
+  signal system_axi_rready  : std_logic;
+  
+  signal system_axi_arid    : std_logic_vector(11 downto 0);
+  signal system_axi_awid    : std_logic_vector(11 downto 0);
+  signal system_axi_wid     : std_logic_vector(11 downto 0);
+  signal system_axi_bid     : std_logic_vector(11 downto 0);
+  signal system_axi_rid     : std_logic_vector(11 downto 0);
+  signal system_axi_rlast   : std_logic;
+  signal system_axi_wlast   : std_logic;
+
+  -- AXI Master record signals
+  signal m_axil_m2s         : axil_m2s_t;
+  signal m_axil_s2m         : axil_s2m_t;
+
+  -- AXI Subordinate record signals
+  signal s_axil_m2s         : axil_m2s_array_t(0 to 1);
+  signal s_axil_s2m         : axil_s2m_array_t(0 to 1);
+
+  -- GPIO Register arrays
+  signal gpio_inputs        : gpio_array_t(0 to 3)(31 downto 0);
+  signal gpio_outputs       : gpio_array_t(0 to 5)(31 downto 0);
+
+  -- BRAM native interface signals
+  signal bram_clk_b         : std_logic;
+  signal bram_addr_b        : std_logic_vector(13 downto 0);
+  signal bram_dout_b        : std_logic_vector(31 downto 0);
+
+  signal dso_clk_out_unbuffered : std_logic;
+
+  -- Flat interconnect base and mask constants (Splits 64KB space at 0x43C0_0000)
+  constant C_SLAVE_ADDR_BASES : std_logic_vector(63 downto 0) := x"43C0_4000" & x"43C0_0000";
+  constant C_SLAVE_ADDR_MASKS : std_logic_vector(63 downto 0) := x"FFFF_C000" & x"FFFF_C000";
+begin
+  -- Pack Manager-to-Subordinate record from system BD output signals
+  m_axil_m2s.awaddr  <= system_axi_awaddr;
+  m_axil_m2s.awprot  <= system_axi_awprot;
+  m_axil_m2s.awvalid <= system_axi_awvalid;
+  m_axil_m2s.wdata   <= system_axi_wdata;
+  m_axil_m2s.wstrb   <= system_axi_wstrb;
+  m_axil_m2s.wvalid  <= system_axi_wvalid;
+  m_axil_m2s.bready  <= system_axi_bready;
+  m_axil_m2s.araddr  <= system_axi_araddr;
+  m_axil_m2s.arprot  <= system_axi_arprot;
+  m_axil_m2s.arvalid <= system_axi_arvalid;
+  m_axil_m2s.rready  <= system_axi_rready;
+
+  -- Unpack Subordinate-to-Manager record to system BD input signals
+  system_axi_awready <= m_axil_s2m.awready;
+  system_axi_wready  <= m_axil_s2m.wready;
+  system_axi_bresp   <= m_axil_s2m.bresp;
+  system_axi_bvalid  <= m_axil_s2m.bvalid;
+  system_axi_arready <= m_axil_s2m.arready;
+  system_axi_rdata   <= m_axil_s2m.rdata;
+  system_axi_rresp   <= m_axil_s2m.rresp;
+  system_axi_rvalid  <= m_axil_s2m.rvalid;
+
+  -- Drive remaining system BD input signals (full-to-lite bridging)
+  system_axi_rlast   <= '1';
+  system_axi_bid     <= system_axi_awid;
+  system_axi_rid     <= system_axi_arid;
+
+  -- Zynq Processing System Block Design Wrapper Instantiation
+  system_i: component system
+     port map (
+      DDR_addr(14 downto 0) => DDR_addr(14 downto 0),
+      DDR_ba(2 downto 0) => DDR_ba(2 downto 0),
+      DDR_cas_n => DDR_cas_n,
+      DDR_ck_n => DDR_ck_n,
+      DDR_ck_p => DDR_ck_p,
+      DDR_cke => DDR_cke,
+      DDR_cs_n => DDR_cs_n,
+      DDR_dm(3 downto 0) => DDR_dm(3 downto 0),
+      DDR_dq(31 downto 0) => DDR_dq(31 downto 0),
+      DDR_dqs_n(3 downto 0) => DDR_dqs_n(3 downto 0),
+      DDR_dqs_p(3 downto 0) => DDR_dqs_p(3 downto 0),
+      DDR_odt => DDR_odt,
+      DDR_ras_n => DDR_ras_n,
+      DDR_reset_n => DDR_reset_n,
+      DDR_we_n => DDR_we_n,
+      FCLK_CLK0 => clk_axi_internal,
+      FCLK_CLK1 => clk_dso_internal,
+      FCLK_RESET0_N => rst_n_axi_internal,
+      FCLK_RESET1_N => rst_n_dso_internal,
+      FIXED_IO_ddr_vrn => FIXED_IO_ddr_vrn,
+      FIXED_IO_ddr_vrp => FIXED_IO_ddr_vrp,
+      FIXED_IO_mio(53 downto 0) => FIXED_IO_mio(53 downto 0),
+      FIXED_IO_ps_clk => FIXED_IO_ps_clk,
+      FIXED_IO_ps_porb => FIXED_IO_ps_porb,
+      FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
+      M_AXI_GP0_0_araddr(31 downto 0) => system_axi_araddr,
+      M_AXI_GP0_0_arburst => open,
+      M_AXI_GP0_0_arcache => open,
+      M_AXI_GP0_0_arid => system_axi_arid,
+      M_AXI_GP0_0_arlen => open,
+      M_AXI_GP0_0_arlock => open,
+      M_AXI_GP0_0_arprot => system_axi_arprot,
+      M_AXI_GP0_0_arqos => open,
+      M_AXI_GP0_0_arready => system_axi_arready,
+      M_AXI_GP0_0_arsize => open,
+      M_AXI_GP0_0_arvalid => system_axi_arvalid,
+      M_AXI_GP0_0_awaddr(31 downto 0) => system_axi_awaddr,
+      M_AXI_GP0_0_awburst => open,
+      M_AXI_GP0_0_awcache => open,
+      M_AXI_GP0_0_awid => system_axi_awid,
+      M_AXI_GP0_0_awlen => open,
+      M_AXI_GP0_0_awlock => open,
+      M_AXI_GP0_0_awprot => system_axi_awprot,
+      M_AXI_GP0_0_awqos => open,
+      M_AXI_GP0_0_awready => system_axi_awready,
+      M_AXI_GP0_0_awsize => open,
+      M_AXI_GP0_0_awvalid => system_axi_awvalid,
+      M_AXI_GP0_0_bid => system_axi_bid,
+      M_AXI_GP0_0_bready => system_axi_bready,
+      M_AXI_GP0_0_bresp => system_axi_bresp,
+      M_AXI_GP0_0_bvalid => system_axi_bvalid,
+      M_AXI_GP0_0_rdata => system_axi_rdata,
+      M_AXI_GP0_0_rid => system_axi_rid,
+      M_AXI_GP0_0_rlast => system_axi_rlast,
+      M_AXI_GP0_0_rready => system_axi_rready,
+      M_AXI_GP0_0_rresp => system_axi_rresp,
+      M_AXI_GP0_0_rvalid => system_axi_rvalid,
+      M_AXI_GP0_0_wdata => system_axi_wdata,
+      M_AXI_GP0_0_wid => system_axi_wid,
+      M_AXI_GP0_0_wlast => system_axi_wlast,
+      M_AXI_GP0_0_wready => system_axi_wready,
+      M_AXI_GP0_0_wstrb => system_axi_wstrb,
+      M_AXI_GP0_0_wvalid => system_axi_wvalid
+    );
+
+  -- AXI-Lite Interconnect Instance (clocked by clk_axi_internal = FCLK_CLK0)
+  i_interconnect : entity work.axi_lite_interconnect
+    generic map (
+      NUM_SLAVES       => 2,
+      AXI_ADDR_WIDTH   => 32,
+      AXI_DATA_WIDTH   => 32,
+      SLAVE_ADDR_BASES => C_SLAVE_ADDR_BASES,
+      SLAVE_ADDR_MASKS => C_SLAVE_ADDR_MASKS
+    )
+    port map (
+      aclk      => clk_axi_internal,
+      aresetn   => rst_n_axi_internal,
+      m_axi_m2s => m_axil_m2s,
+      m_axi_s2m => m_axil_s2m,
+      s_axi_m2s => s_axil_m2s,
+      s_axi_s2m => s_axil_s2m
+    );
+
+  -- AXI BRAM Controller Instance (clocked by clk_axi_internal = FCLK_CLK0)
+  i_bram_ctrl : entity work.axi_bram_ctrl
+    generic map (
+      BRAM_MODE       => "READ_ONLY",
+      AXI_ADDR_WIDTH  => 32,
+      AXI_DATA_WIDTH  => 32,
+      BRAM_ADDR_WIDTH => 14
+    )
+    port map (
+      aclk        => clk_axi_internal,
+      aresetn     => rst_n_axi_internal,
+      s_axi_m2s   => s_axil_m2s(0),
+      s_axi_s2m   => s_axil_s2m(0),
+      bram_clk    => bram_clk_b,
+      bram_rst    => open,
+      bram_en     => open,
+      bram_we     => open,
+      bram_addr   => bram_addr_b,
+      bram_wrdata => open,
+      bram_rddata => bram_dout_b
+    );
+
+  -- AXI GPIO Instance (clocked by clk_axi_internal = FCLK_CLK0)
+  i_axi_gpio : entity work.axi_gpio
+    generic map (
+      NUM_INPUT_REGS  => 4,
+      NUM_OUTPUT_REGS => 6,
+      GPIO_WIDTH      => 32
+    )
+    port map (
+      s_axi_aclk    => clk_axi_internal,
+      s_axi_aresetn => rst_n_axi_internal,
+      s_axi_m2s     => s_axil_m2s(1),
+      s_axi_s2m     => s_axil_s2m(1),
+      inputs_i      => gpio_inputs,
+      outputs_o     => gpio_outputs
+    );
+
+  -- Digital Storage Oscilloscope Top Wrapper Instance (clocked by clk_dso_internal = FCLK_CLK1)
+  i_dso : entity work.dso_core_top_zynq
+    generic map (
+      G_ADDR_WIDTH => 14
+    )
+    port map (
+      clk         => clk_dso_internal,
+      rst_n       => rst_n_dso_internal,
+      adc_data_in => adc_data_in,
+      ctrl0_reg   => gpio_outputs(0),
+      ctrl1_reg   => gpio_outputs(1),
+      ctrl2_reg   => gpio_outputs(2),
+      ctrl3_reg   => gpio_outputs(3),
+      ctrl4_reg   => gpio_outputs(4),
+      ctrl5_reg   => gpio_outputs(5),
+      stat0_reg   => gpio_inputs(0),
+      stat1_reg   => gpio_inputs(1),
+      stat2_reg   => gpio_inputs(2),
+      stat3_reg   => gpio_inputs(3),
+      clk_b       => bram_clk_b,     -- Driven by AXI BRAM Controller clock output (clk_axi_internal = FCLK_CLK0)
+      addr_b      => bram_addr_b,    -- Mapped from AXI BRAM Controller address
+      dout_b      => bram_dout_b     -- Driven back to AXI BRAM Controller read data
+    );
+
+  -- Buffer clk_dso_internal using ODDR for clean output clock routing
+  oddr_clk_inst : ODDR
+    generic map(
+      DDR_CLK_EDGE => "OPPOSITE_EDGE",
+      INIT => '0',
+      SRTYPE => "SYNC"
+    )
+    port map (
+      Q  => dso_clk_out_unbuffered,
+      C  => clk_dso_internal,
+      CE => '1',
+      D1 => '1',
+      D2 => '0',
+      R  => '0',
+      S  => '0'
+    );
+
+  obuf_clk_inst : OBUF
+    port map (
+      O => dso_clk_out,
+      I => dso_clk_out_unbuffered
+    );
+
+end STRUCTURE;

@@ -1,0 +1,26 @@
+# project_config.mk - Project-wide settings
+# These variables will be used by the Makefile automatically.
+
+# Target Development Board & Part configuration
+BOARD           = zybo_z7
+PART            = xc7z010clg400-1
+
+# Target language for the project and generated wrappers (VHDL or Verilog)
+TARGET_LANGUAGE = VHDL
+
+# Name of the Block Design created inside Vivado (defaults to system)
+BD_NAME         = system
+
+# Define all available software applications
+# Format: <shortcut>:<platform_name>:<os> (space-separated)
+APPS            = hello_world:zybo_plat:standalone dso_rtos:zybo_freertos_plat:freertos lwip_echo:zybo_plat:standalone dso_server:zybo_plat:standalone
+
+# The default application shortcut to compile and run when running 'make sw' 
+# or 'make run' without specifying a target. This must match one of the 
+# shortcut names defined in the 'APPS' list above.
+DEFAULT_APP     = hello_world
+
+# Active application override. If uncommented here, it overrides DEFAULT_APP 
+# project-wide. You can also override this on the command line for a single 
+# command run, e.g. 'make sw APP=my_rtos' or 'make run APP=my_rtos'.
+# APP             = hello_world
