@@ -53,6 +53,7 @@ help:
 	@echo "  make sync-sw         - Harvests source changes from Vitis GUI back to the framework"
 	@echo "  make delete-sw       - Removes application sources and Vitis workspace artifacts"
 	@echo "  make list-arm-params - Shows paths to generated xparameters.h and driver headers"
+	@echo "  make docs            - Renders FRAMEWORK_GUIDE.md to docs/FRAMEWORK_GUIDE.html"
 
 	@echo "  make load-ram        - Pushes BOOT.BIN to DDR (0x08000000) for manual NAND flashing"
 	@echo "  make gui             - Launches a standard Vivado GUI instance"
@@ -66,7 +67,7 @@ help:
 	@echo "  ACTIVE APP:      $(APP)"
 	@echo ""
 
-.PHONY: all hw sw boot run edit-hw sync-scripts gui program clean help
+.PHONY: all hw sw boot run edit-hw sync-scripts gui program clean help docs
 
 # Build Hardware
 hw:
@@ -185,3 +186,8 @@ program:
 
 clean:
 	rm -rf hw_build vitis_ws .Xil .gen .srcs .cache project_1 myproj *.log *.jou BOOT.BIN boot.bif clockInfo.txt
+
+# Generate HTML docs from FRAMEWORK_GUIDE.md (untracked, gitignored output)
+docs:
+	@echo "📖 Rendering FRAMEWORK_GUIDE.md -> docs/FRAMEWORK_GUIDE.html..."
+	python3 scripts/gen_docs.py FRAMEWORK_GUIDE.md docs/FRAMEWORK_GUIDE.html
