@@ -93,17 +93,30 @@ def restore_bsp_config(platform):
             except Exception as e:
                 print(f"   ⚠️  Warning: Failed to regenerate domain via API: {e}")
 
-            # Apply custom xemacpsif_physpeed.c patch if it exists
-            patch_src = os.path.abspath("./sw/patches/xemacpsif_physpeed.c")
-            if os.path.exists(patch_src):
-                patch_dest = os.path.join(WORKSPACE, plat_name, "ps7_cortexa9_0", f"{os_type}_ps7_cortexa9_0", "bsp", "libsrc", "lwip220", "src", "lwip-2.2.0", "contrib", "ports", "xilinx", "netif", "xemacpsif_physpeed.c")
-                if os.path.exists(os.path.dirname(patch_dest)):
-                    print(f"   🩹 Applying custom Realtek RTL8211F PHY speed patch to {patch_dest}...")
-                    shutil.copy2(patch_src, patch_dest)
-                else:
-                    print(f"   ⚠️  Warning: Destination directory for patch does not exist: {os.path.dirname(patch_dest)}")
     else:
         print("   ⚠️  Warning: Target bsp.yaml not found to overwrite.")
+
+def apply_phy_patch():
+    # Apply a custom xemacpsif_physpeed.c patch if present. Independent of
+    # whether a saved BSP yaml config exists (unlike restore_bsp_config,
+    # which returns early without one) - a fresh platform still needs this
+    # patch applied. A board-specific patch (sw/patches/xemacpsif_physpeed.c.
+    # <BOARD>) takes precedence over the generic fallback
+    # (sw/patches/xemacpsif_physpeed.c).
+    patch_candidates = [
+        os.path.abspath(f"./sw/patches/xemacpsif_physpeed.c.{board}"),
+        os.path.abspath("./sw/patches/xemacpsif_physpeed.c"),
+    ]
+    patch_src = next((p for p in patch_candidates if os.path.exists(p)), None)
+    if not patch_src:
+        return
+
+    patch_dest = os.path.join(WORKSPACE, plat_name, "ps7_cortexa9_0", f"{os_type}_ps7_cortexa9_0", "bsp", "libsrc", "lwip220", "src", "lwip-2.2.0", "contrib", "ports", "xilinx", "netif", "xemacpsif_physpeed.c")
+    if os.path.exists(os.path.dirname(patch_dest)):
+        print(f"   🩹 Applying PHY speed patch from {patch_src} to {patch_dest}...")
+        shutil.copy2(patch_src, patch_dest)
+    else:
+        print(f"   ⚠️  Warning: Destination directory for patch does not exist: {os.path.dirname(patch_dest)} (lwip220 library not enabled on this platform yet?)")
 
 # 1. Platform Component
 plat_dir = os.path.join(WORKSPACE, plat_name)
@@ -119,6 +132,7 @@ if not os.path.exists(plat_dir):
     )
     # Restore saved config BEFORE the first build
     restore_bsp_config(platform)
+    apply_phy_patch()
     print(f"🔨 Building Platform {plat_name}...")
     platform.build()
 else:
@@ -134,7 +148,8 @@ else:
 
     # Always attempt restore (in case user updated the saved YAML manually)
     restore_bsp_config(platform)
-    
+    apply_phy_patch()
+
     print(f"🔨 Rebuilding Platform {plat_name}...")
     platform.build()
 

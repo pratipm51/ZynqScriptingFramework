@@ -28,6 +28,7 @@
 !*.xdc
 !*.example
 !*.zybo_z7
+!*.Zynq_Bajie
 !sw/Makefile*
 
 # 4. Explicitly ignore build artifacts
