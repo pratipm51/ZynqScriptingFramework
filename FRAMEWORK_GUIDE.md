@@ -74,8 +74,8 @@ Below is the complete guide to the framework's `Makefile` targets:
 | Target | Description |
 | :--- | :--- |
 | `make hw` | **Hardware Build:** Runs Vivado in batch mode. Synthesizes HDL (VHDL/Verilog), implements the design, generates the Bitstream, and exports the `.xsa` platform. |
-| `make sw` | **Software Build:** Runs Vitis in batch mode. Creates/updates the platform component and compiles the C application into an `.elf` file. **Now includes auto-update logic for hardware changes.** |
-| `make edit-sw` | **Vitis IDE:** Opens the Vitis Unified IDE for interactive development and testing. Changes made here must be synced back using `make sync-sw`. |
+| `make sw` | **Software Build:** Runs Vitis in batch mode. Creates/updates the platform component, then creates/builds the application named by `APP` (or `DEFAULT_APP`). **Now includes auto-update logic for hardware changes.** Requires `APPS`/`DEFAULT_APP` to be configured (or `APP=` passed explicitly) — see the note below. |
+| `make edit-sw` | **Vitis IDE:** Ensures the Vitis platform exists, then opens the Vitis Unified IDE for interactive development. **Does not create or build an application** — that step is always explicit, either inside Vitis or via a later `make sw APP=<name>`. Changes made in the GUI must be synced back using `make sync-sw`. |
 | `make sync-sw` | **Export:** Harvests files created/modified in the Vitis GUI (recursively scanning all subdirectories) and copies them back to the framework's `sw/` folders for version control, preserving directory hierarchy. |
 | `make delete-sw` | **Cleanup:** Removes the specified application sources and its corresponding Vitis workspace component. |
 | `make all` | **Full Build:** Shortcut for `make hw` followed by `make sw`. |
@@ -89,10 +89,85 @@ Below is the complete guide to the framework's `Makefile` targets:
 | `make gui` | **Vivado GUI:** Launches a standard Vivado GUI instance in the background. |
 | `make clean` | **Cleanup:** Wipes all build artifacts (`hw_build`, `vitis_ws`), temporary Vivado projects (`project_1`, `myproj`), and log files. |
 
+> [!NOTE]
+> **`make edit-sw` never auto-creates an application.** It only ensures the Vitis platform component exists, then opens the GUI. Creating (or importing) an application is always something you do explicitly — either inside Vitis or by running `make sw APP=<name>` from the CLI. This is intentional: opening the IDE to poke around shouldn't silently create/build software you didn't ask for.
+>
+> **`make sw`, `make run`, and `make all` require an application to be selected.** They resolve the active app from `APP` (command line) or `DEFAULT_APP` (`project_config.mk`), which must match a shortcut listed in `APPS`. If both `APPS` and `DEFAULT_APP` are left unset and no `APP=` is passed, there is no valid application to build and the command will fail — always configure `APPS`/`DEFAULT_APP` (see [Section 8](#8-global-configuration-project_configmk)) or pass `APP=<name>` explicitly.
 
 ---
 
-## 5. Troubleshooting: Why isn't my PL logic running?
+## 5. Complete Walkthrough: "Hello World" from Blank Project to Hardware
+
+This walks through the full loop end-to-end on a fresh clone: configuring the board, building a Block Design, creating a `hello_world` application, and running it on real hardware via JTAG.
+
+### Step 1: Configure the board
+Create `project_config.mk` in the project root (copy `project_config.mk.example`):
+```make
+BOARD           = my_board
+PART            = xc7z010clg400-1
+TARGET_LANGUAGE = VHDL
+BD_NAME         = system
+
+APPS            = hello_world:my_board_standalone_plat:standalone
+DEFAULT_APP     = hello_world
+```
+`APPS` maps the shortcut `hello_world` to a platform component `my_board_standalone_plat` running `standalone`. `DEFAULT_APP` makes `hello_world` the application that `make sw` / `make run` build when `APP=` isn't passed on the command line.
+
+### Step 2: Build the Block Design (Vivado GUI)
+1. `make edit-hw` — opens Vivado and creates/opens the project for `BOARD`.
+2. Create a Block Design named `system` (or your `BD_NAME`).
+3. Add the **ZYNQ7 Processing System** IP, then run **Block Automation** to apply any board-specific presets.
+4. (Optional) Add PL peripherals (GPIO, custom IP, etc.) and wire them up.
+5. Click **"Sync to Framework"** on the toolbar. This generates `src/hdl/top.vhd` (if missing, pre-wired to the PS ports) and writes `board_configs/${BOARD}_bd.tcl` so the design is fully scripted and reproducible.
+6. Close Vivado — `make hw` cleans up temporary project files automatically on the next run.
+
+### Step 3: Wire up pin constraints
+Edit `src/constr/${BOARD}.xdc` and map the ports declared in `top.vhd` (UART, LEDs, clock, etc.) to your board's physical pins.
+
+### Step 4: Build the bitstream
+```bash
+make hw
+```
+Runs Vivado in batch mode, synthesizes/implements the design, and exports `hw_build/${BOARD}/${BD_NAME}.xsa`.
+
+### Step 5: Create the `hello_world` application
+```bash
+make edit-sw
+```
+This ensures the Vitis platform (`my_board_standalone_plat`) exists and opens the Vitis Unified IDE — it will **not** create the app for you. Inside Vitis:
+1. **File → New Component → Application Component**.
+2. Name it `hello_world` (must match the shortcut used in `APPS`).
+3. Select the platform `my_board_standalone_plat` and domain `standalone_ps7_cortexa9_0`.
+4. Choose the **Hello World** template (or **Empty Application** and write your own `main.c`).
+5. Build once inside Vitis to confirm it compiles.
+
+### Step 6: Harvest the sources back into the framework
+```bash
+make sync-sw
+```
+Copies whatever you created/edited in the Vitis GUI back into `sw/zynq_ps/hello_world/` (or `sw/hello_world/`) so it's tracked in Git and rebuildable from the CLI.
+
+### Step 7: Rebuild from the CLI
+```bash
+make sw
+```
+Confirms the harvested sources build cleanly outside the GUI, producing `vitis_ws/hello_world/build/hello_world.elf`.
+
+### Step 8: Run it on the board
+```bash
+make run
+```
+Connects via JTAG, performs PS7 clock/DDR initialization (`ps7_init.tcl`), downloads the bitstream and `hello_world.elf`, and starts execution. Open a serial terminal (e.g. `screen /dev/ttyUSB1 115200`) to see the UART output.
+
+### Step 9 (optional): Package for standalone boot
+```bash
+make boot   # produces BOOT.BIN (FSBL + bitstream + hello_world.elf)
+```
+Copy `BOOT.BIN` to an SD card, or use `make load-ram` plus U-Boot, to boot without JTAG attached.
+
+---
+
+## 6. Troubleshooting: Why isn't my PL logic running?
 
 If your HDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will not run** by simply flashing the bitstream with `make program`. 
 
@@ -100,7 +175,7 @@ If your HDL logic is clocked by a Zynq PS clock (e.g., `FCLK_CLK0`), it **will n
 
 ---
 
-## 6. Advanced Features
+## 7. Advanced Features
 
 ### External HDL Libraries (`vhdl_libs.txt`)
 If your project requires external HDL codebases (VHDL, Verilog, or SystemVerilog) that must be compiled into specific libraries (e.g., **NeoRV32**), create a file named `vhdl_libs.txt` in your project root. 
@@ -152,7 +227,7 @@ For complex designs with multiple packages and dependencies, you can control the
 
 ---
 
-## 7. Global Configuration (`project_config.mk`)
+## 8. Global Configuration (`project_config.mk`)
 
 Instead of passing configuration values on the command line every time, you can create a file named **`project_config.mk`** in the root of your project. The framework will automatically read this file and use these values as defaults for all commands.
 
@@ -172,7 +247,7 @@ Below is a detailed guide to all configuration variables supported by the framew
 | Variable | Description | Default Value | Example |
 | :--- | :--- | :--- | :--- |
 | `APPS` | A space-separated list of application tuples mapping a shortcut name, target platform, and operating system. Format: `<shortcut>:<platform_name>:<os>` | *None* | `APPS = hello_world:sys_plat:standalone my_rtos:rtos_plat:freertos` |
-| `DEFAULT_APP` | The default application shortcut to build if the `APP` variable is not specified on the command line. Must match a shortcut defined in `APPS`. | *None* | `DEFAULT_APP = hello_world` |
+| `DEFAULT_APP` | The default application shortcut to build if the `APP` variable is not specified on the command line. Must match a shortcut defined in `APPS`. **Required for `make sw`/`make run`/`make all` unless `APP=` is passed on every invocation** — leaving both `APPS` and `DEFAULT_APP` unset gives those targets no valid application to build. Does **not** affect `make edit-sw`, which never builds an app. | *None* | `DEFAULT_APP = hello_world` |
 | `APP` | Command line parameter or configuration variable to choose the active application workspace component to compile and run. | `$(DEFAULT_APP)` | `make sw APP=my_rtos` |
 | `APP_ELF` / `ZYNQ_ELF` | Overrides the target path to the compiled ARM Cortex-A9 software ELF executable file. | `./vitis_ws/$(REAL_APP)/build/...` | `APP_ELF = ./sw/zynq_ps/build.elf` |
 
@@ -193,7 +268,7 @@ DEFAULT_APP = hello_world
 ```
 
 
-## 8. Hybrid Multi-CPU Support (ARM + Soft-CPU)
+## 9. Hybrid Multi-CPU Support (ARM + Soft-CPU)
 
 This framework supports true **Dual-CPU** development, where you can have custom code running on both the Zynq ARM core and a soft-CPU in the PL (e.g., NeoRV32).
 
@@ -220,7 +295,7 @@ If you aren't using a soft-CPU, just put your code in `sw/zynq_ps/` (or use `arm
 
 ---
 
-## 8. Utilities
+## 10. Utilities
 
 ### VHDL IP Design Templates (`utilities/hdl_templates/`)
 The framework provides generic, parameterized, and fully synthesizable reference VHDL IP cores for common bus structures:
@@ -250,7 +325,7 @@ A simple Python tool to upload compiled binary files to the NeoRV32 soft-CPU via
 
 ---
 
-## 9. Advanced Software Management
+## 11. Advanced Software Management
 
 ### Hardware-Aware Platform Updates
 The framework automatically detects when your hardware design has changed. If you run `make hw` and then `make sw`, the script will compare the timestamp of the generated `.xsa` file with the existing Vitis platform. 
@@ -278,7 +353,7 @@ You can manage different operating systems (Standalone vs. FreeRTOS) directly vi
 
 ---
 
-## 10. Git Best Practices
+## 12. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**
