@@ -92,7 +92,7 @@ Below is the complete guide to the framework's `Makefile` targets:
 > [!NOTE]
 > **`make edit-sw` never auto-creates an application.** It only ensures the Vitis platform component exists, then opens the GUI. Creating (or importing) an application is always something you do explicitly — either inside Vitis or by running `make sw APP=<name>` from the CLI. This is intentional: opening the IDE to poke around shouldn't silently create/build software you didn't ask for.
 >
-> **`make sw`, `make run`, and `make all` require an application to be selected.** They resolve the active app from `APP` (command line) or `DEFAULT_APP` (`project_config.mk`), which must match a shortcut listed in `APPS`. If both `APPS` and `DEFAULT_APP` are left unset and no `APP=` is passed, there is no valid application to build and the command will fail — always configure `APPS`/`DEFAULT_APP` (see [Section 8](#8-global-configuration-project_configmk)) or pass `APP=<name>` explicitly.
+> **`make sw`, `make run`, and `make all` require an application to be selected.** They resolve the active app from `APP` (command line) or `DEFAULT_APP` (`project_config.mk`), which must match a shortcut listed in `APPS`. If both `APPS` and `DEFAULT_APP` are left unset and no `APP=` is passed, there is no valid application to build and the command will fail — always configure `APPS`/`DEFAULT_APP` (see [Section 9](#9-global-configuration-project_configmk)) or pass `APP=<name>` explicitly.
 
 ---
 
@@ -167,7 +167,37 @@ Copy `BOOT.BIN` to an SD card, or use `make load-ram` plus U-Boot, to boot witho
 
 ---
 
-## 6. Troubleshooting
+## 6. Modifying an Existing Project: New Hardware, Apps, and Platforms
+
+Section 5 covers the first Block Design, platform, and app from a blank project. This section covers the ongoing loop: changing the hardware later, and adding more apps (with either an existing or a brand-new platform) to a project that's already up and running.
+
+### Modifying the Block Design
+1. `make edit-hw` — reopens Vivado on your existing project/Block Design.
+2. Make your changes (add IP, reconfigure the Zynq7 PS, etc.).
+3. Click **"Sync to Framework"** again. If you added/changed ports, update `src/hdl/top.vhd`'s `component` declaration and `src/constr/${BOARD}.xdc` (or `src/constr/${BOARD}/*.xdc`) to match.
+4. `make hw` to rebuild the bitstream against the new hardware.
+
+**Important:** any *existing* platform in `vitis_ws/` is updated **incrementally** the next time it's built (`make sw`/`make edit-sw`), not recreated from scratch. Most hardware changes are handled fine this way. But changes that could shift a `Default`/`Auto`-resolved BSP setting — most commonly adding a timer, or changing what's available as stdin/stdout/interrupt controller — can leave a platform in a broken state (e.g. `undefined reference to XTime_GetTime`). See [Troubleshooting](#7-troubleshooting) below; the fix is to delete that platform directory under `vitis_ws/` and let it regenerate fresh.
+
+### Adding a New App to an Existing Platform
+If the new app doesn't need different BSP settings (libraries, timer config, stdin/stdout) than an app you already have, reuse its platform:
+1. Add an entry to `APPS` in `project_config.mk`: `<new_shortcut>:<existing_platform_name>:<os>`.
+2. `make edit-sw APP=<new_shortcut>` — opens Vitis with that platform ensured (already exists, so this is fast).
+3. Create the app component in Vitis, targeting the existing platform.
+4. Once the shortcut in `APPS` matches the real Vitis component name (see below if you used a template), run `make sync-sw`, then `make sw APP=<new_shortcut>` / `make run APP=<new_shortcut>`.
+
+### Adding a New App With Its Own New Platform
+Give the app its own platform when it needs BSP-level changes (enabled libraries like lwIP, different timer/interrupt config, etc.) that shouldn't affect your other apps — see [Multiple Platforms Per Board](#multiple-platforms-per-board) for why.
+
+1. Add an entry with a **new** platform name: `<new_shortcut>:<new_platform_name>:<os>`.
+2. **Target it explicitly**: `make edit-sw APP=<new_shortcut>`. This is easy to get wrong — running plain `make edit-sw` (no `APP=`) resolves the active app from `DEFAULT_APP`, so it will silently ensure your *old* platform instead and the new one simply won't appear in Vitis, with no error. Passing `APP=<new_shortcut>` is what makes the Makefile resolve `<new_platform_name>` and create it fresh (it doesn't exist in `vitis_ws/` yet).
+3. Create the app component in Vitis targeting the new platform, and configure that platform's Board Support Package Settings (lwIP, timers, etc.) — changes here are isolated to this platform only.
+4. If you used a Vitis template and don't know the component name in advance, see [Adding Apps Whose Name You Don't Know Yet](#adding-apps-whose-name-you-dont-know-yet-vitis-templates) — update the `APPS` shortcut to match before syncing.
+5. `make sync-sw`, then `make sw APP=<new_shortcut>` / `make run APP=<new_shortcut>`.
+
+---
+
+## 7. Troubleshooting
 
 ### Why isn't my PL logic running?
 
@@ -200,7 +230,7 @@ This isn't unique to timers — any BD change that could plausibly shift an `Def
 
 ---
 
-## 7. Advanced Features
+## 8. Advanced Features
 
 ### External HDL Libraries (`vhdl_libs.txt`)
 If your project requires external HDL codebases (VHDL, Verilog, or SystemVerilog) that must be compiled into specific libraries (e.g., **NeoRV32**), create a file named `vhdl_libs.txt` in your project root. 
@@ -274,7 +304,7 @@ For complex designs with multiple packages and dependencies, you can control the
 
 ---
 
-## 8. Global Configuration (`project_config.mk`)
+## 9. Global Configuration (`project_config.mk`)
 
 Instead of passing configuration values on the command line every time, you can create a file named **`project_config.mk`** in the root of your project. The framework will automatically read this file and use these values as defaults for all commands.
 
@@ -315,7 +345,7 @@ DEFAULT_APP = hello_world
 ```
 
 
-## 9. Hybrid Multi-CPU Support (ARM + Soft-CPU)
+## 10. Hybrid Multi-CPU Support (ARM + Soft-CPU)
 
 This framework supports true **Dual-CPU** development, where you can have custom code running on both the Zynq ARM core and a soft-CPU in the PL (e.g., NeoRV32).
 
@@ -342,7 +372,7 @@ If you aren't using a soft-CPU, just put your code in `sw/zynq_ps/` (or use `arm
 
 ---
 
-## 10. Utilities
+## 11. Utilities
 
 ### VHDL IP Design Templates (`utilities/hdl_templates/`)
 The framework provides generic, parameterized, and fully synthesizable reference VHDL IP cores for common bus structures:
@@ -372,7 +402,7 @@ A simple Python tool to upload compiled binary files to the NeoRV32 soft-CPU via
 
 ---
 
-## 11. Advanced Software Management
+## 12. Advanced Software Management
 
 ### Hardware-Aware Platform Updates
 The framework automatically detects when your hardware design has changed. If you run `make hw` and then `make sw`, the script will compare the timestamp of the generated `.xsa` file with the existing Vitis platform. 
@@ -420,7 +450,7 @@ Running `make edit-sw APP=eth_server` (with a matching `APPS` entry) creates `Zy
 
 ---
 
-## 12. Git Best Practices
+## 13. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**
