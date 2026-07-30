@@ -141,6 +141,12 @@ else:
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
 
 # 2. Application Component
+if not app_name:
+    print("ℹ️  No app specified - platform-only mode. Skipping application creation.")
+    print("   Create/import an app in the Vitis GUI, or run 'make sw APP=<name>' later.")
+    print("✅ Vitis Build Process Complete!")
+    sys.exit(0)
+
 is_templated = False
 template_name = None
 

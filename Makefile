@@ -91,7 +91,15 @@ sw:
 	vitis -s scripts/build_sw.py $(BOARD) $(REAL_APP) $(REAL_PLAT) $(REAL_OS) $(BD_NAME)
 
 # GUI Workflow: Open Vitis for interactive development
-edit-sw: sw
+# Ensures the platform exists but does NOT create/build an app - that's left
+# to the user inside the GUI (or a later 'make sw APP=...' / 'make sync-sw').
+edit-sw:
+	@if [ ! -f $(HW_XSA) ]; then \
+		echo "❌ Error: Hardware XSA not found at $(HW_XSA). Run 'make hw' first."; \
+		exit 1; \
+	fi
+	@echo "🚀 Ensuring Zynq Platform '$(REAL_PLAT)' is ready (no app will be created)..."
+	vitis -s scripts/build_sw.py $(BOARD) "" $(REAL_PLAT) $(REAL_OS) $(BD_NAME)
 	@echo "🛠️ Opening Vitis Unified IDE for $(BOARD)..."
 	vitis -w ./vitis_ws &
 
