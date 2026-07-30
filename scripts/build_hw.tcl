@@ -106,7 +106,35 @@ foreach lib_entry $lib_entries {
 
 # --- Read Local Sources ---
 read_sources xil_defaultlib "./src/hdl"
-read_xdc "./src/constr/${board_type}.xdc"
+
+# --- Read XDC Constraints ---
+# Supports a single-file convention (src/constr/${BOARD}.xdc) and/or a
+# modular per-component directory (src/constr/${BOARD}/*.xdc). Filenames in
+# the directory are arbitrary - every *.xdc file found is read, in sorted
+# order for reproducibility. Both may be used together.
+set xdc_single "./src/constr/${board_type}.xdc"
+set xdc_dir "./src/constr/${board_type}"
+set xdc_found 0
+
+if {[file exists $xdc_single]} {
+    puts "📌 Reading constraints: $xdc_single"
+    read_xdc $xdc_single
+    set xdc_found 1
+}
+
+if {[file isdirectory $xdc_dir]} {
+    set xdc_files [lsort [glob -nocomplain -directory $xdc_dir "*.xdc"]]
+    foreach xdc_file $xdc_files {
+        puts "📌 Reading constraints: $xdc_file"
+        read_xdc $xdc_file
+        set xdc_found 1
+    }
+}
+
+if {!$xdc_found} {
+    puts "❌ Error: No constraints found. Expected $xdc_single or $xdc_dir/*.xdc"
+    exit 1
+}
 
 # --- Auto-Detect Block Design ---
 if {[file exists $bd_script]} {

@@ -219,6 +219,28 @@ The framework will automatically:
 
 ---
 
+### Modular Pin Constraints (`src/constr/${BOARD}/`)
+Instead of maintaining one large `src/constr/${BOARD}.xdc` file, you can split constraints into per-component files under a directory named after your board:
+
+```text
+src/constr/
+└── Zynq_Bajie/
+    ├── ethernet.xdc
+    ├── hdmi.xdc
+    ├── i2c.xdc
+    └── spi.xdc
+```
+
+**Key Features:**
+- **Filenames are arbitrary.** Every file ending in `.xdc` inside `src/constr/${BOARD}/` is picked up automatically — name them after the peripheral they constrain (`ethernet.xdc`, `hdmi.xdc`, etc.) for clarity.
+- **Sorted, deterministic read order.** Files are read alphabetically, not by creation time. This only matters if two files constrain the *same* signal differently (the later one wins) or you rely on ordered timing exceptions — independent per-peripheral pin constraints are unaffected by order.
+- **Both conventions can coexist.** If `src/constr/${BOARD}.xdc` also exists, it's read first, followed by everything in `src/constr/${BOARD}/*.xdc`. Use the single file for base/shared constraints and the directory for modular, per-peripheral ones — or just use one or the other.
+- **At least one must exist.** `make hw` fails fast with a clear error if neither `src/constr/${BOARD}.xdc` nor `src/constr/${BOARD}/` (with at least one `.xdc` file) is found.
+
+This is especially useful for boards without an official Vivado board file: build up `src/constr/${BOARD}/` one peripheral at a time as you bring up Ethernet, HDMI, I2C, SPI, etc., testing hardware after each addition.
+
+---
+
 ### VHDL/Verilog Compilation Order
 For complex designs with multiple packages and dependencies, you can control the compilation order:
 
