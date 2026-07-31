@@ -1077,27 +1077,33 @@ static u32_t get_Realtek_RTL8211F_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 	}
 	xil_printf("autonegotiation complete \r\n");
 
-	// Switch to Page 0x0A43 to read PHYSR1
+	// DEBUG ONLY: Page 0xA43 PHYSR1 read kept for comparison, not used for
+	// the actual decision below - its bit-field layout as originally
+	// assumed here (bit2=link, bits[5:4]=speed) didn't match what this
+	// chip actually reports (e.g. observed 0x04FD, whose bits[5:4]=3 is
+	// not a valid value under that assumption). Use the standard IEEE
+	// extended status register (17) instead, which is well-tested via
+	// get_Realtek_phy_speed() elsewhere in this file.
 	XEmacPs_PhyWrite(xemacpsp, phy_addr, 0x1F, 0x0A43);
 	XEmacPs_PhyRead(xemacpsp, phy_addr, 0x1A, &status_speed);
-	xil_printf("DEBUG RTL8211F: PHYSR1 (Page 0xA43, Reg 0x1A) = 0x%04X\r\n", status_speed);
-
-	// Revert to default Page 0x0000
+	xil_printf("DEBUG RTL8211F: PHYSR1 (Page 0xA43, Reg 0x1A) = 0x%04X (informational only)\r\n", status_speed);
 	XEmacPs_PhyWrite(xemacpsp, phy_addr, 0x1F, 0x0000);
 
-	// Bit 2 is Link Status (1 = Link Up)
-	if (status_speed & 0x0004) {
-		// Bits 5:4 are Speed: 00 = 10Mbps, 01 = 100Mbps, 10 = 1000Mbps
-		temp_speed = (status_speed >> 4) & 0x0003;
-		if (temp_speed == 2) {
+	XEmacPs_PhyRead(xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET, &status);
+	XEmacPs_PhyRead(xemacpsp, phy_addr, IEEE_SPECIFIC_STATUS_REG, &status_speed);
+	xil_printf("DEBUG RTL8211F: reg1(status)=0x%04X, reg17(spec_status)=0x%04X\r\n", status, status_speed);
+
+	if (status_speed & 0x400) {
+		temp_speed = status_speed & IEEE_SPEED_MASK;
+		if (temp_speed == IEEE_SPEED_1000) {
 			return 1000;
-		} else if (temp_speed == 1) {
+		} else if (temp_speed == IEEE_SPEED_100) {
 			return 100;
-		} else if (temp_speed == 0) {
+		} else {
 			return 10;
 		}
 	} else {
-		xil_printf("DEBUG RTL8211F: Link is down (PHYSR1 Bit 2 is 0)\r\n");
+		xil_printf("DEBUG RTL8211F: reg17 bit10 (speed/duplex resolved) is 0 (Link Down)\r\n");
 	}
 
 	return XST_FAILURE;
