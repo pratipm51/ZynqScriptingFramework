@@ -76,6 +76,34 @@ proc read_sources {lib_name path} {
 create_project -in_memory -part $part
 set_property target_language $target_lang [current_project]
 
+# --- Handle Extra IP Repositories from ip_repos.txt or environment ---
+# Needed for third-party/custom-packaged IP (e.g. Digilent's rgb2dvi) that a
+# Block Design script references via create_bd_cell - the IP catalog must
+# know about the repo path before any such source is read.
+set ip_repos_file "ip_repos.txt"
+set ip_repo_paths {}
+
+if {[file exists $ip_repos_file]} {
+    puts "📖 Reading IP repositories from $ip_repos_file"
+    set fp [open $ip_repos_file r]
+    set lines [split [read $fp] "\n"]
+    close $fp
+    foreach line $lines {
+        set entry [string trim $line]
+        if {$entry != "" && ![string match "#*" $entry]} {
+            lappend ip_repo_paths $entry
+        }
+    }
+} elseif {[info exists env(EXTRA_IP_REPOS)]} {
+    set ip_repo_paths [split $env(EXTRA_IP_REPOS) ","]
+}
+
+if {[llength $ip_repo_paths] > 0} {
+    puts "📦 Registering [llength $ip_repo_paths] IP repositories"
+    set_property ip_repo_paths $ip_repo_paths [current_project]
+    update_ip_catalog
+}
+
 # --- Handle Extra VHDL Libraries from vhdl_libs.txt or environment ---
 set libs_file "vhdl_libs.txt"
 set lib_entries {}

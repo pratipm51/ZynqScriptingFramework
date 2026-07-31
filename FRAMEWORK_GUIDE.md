@@ -257,6 +257,23 @@ use neorv32.neorv32_package.all;
 
 ---
 
+### External IP Repositories (`ip_repos.txt`)
+If your Block Design references third-party or custom-packaged Vivado IP (e.g. Digilent's open-source `rgb2dvi` HDMI encoder) that isn't in the standard Xilinx IP catalog, create a file named `ip_repos.txt` in your project root listing the repository path(s) to register before the Block Design is built.
+
+**Format:** one absolute path per line (each path is a directory containing IP-XACT `component.xml`-based IP, i.e. a Vivado IP repository root).
+
+**Example `ip_repos.txt`:**
+```text
+/home/user/vivado-library
+```
+
+**Key Features:**
+- Registered via `set_property ip_repo_paths` and `update_ip_catalog` before any `create_bd_cell` calls in `board_configs/${BOARD}_bd.tcl` run, so `make hw` resolves the IP in batch mode with no manual "Settings → IP → Repository" step needed each time.
+- If `ip_repos.txt` is missing, the framework falls back to a comma-separated `EXTRA_IP_REPOS` environment variable, or skips repository registration entirely if neither is set.
+- You still need to add the repository once in the interactive Vivado GUI (`make edit-hw`) so the IP appears in the IP Catalog while you're building the Block Design by hand — `ip_repos.txt` is what makes the *scripted* `make hw` rebuild find it too.
+
+---
+
 ### Multiple Software Directories (`sw_sources.txt`)
 To include multiple software source or include directories, create a file named `sw_sources.txt` in your project root. List one directory path per line:
 
