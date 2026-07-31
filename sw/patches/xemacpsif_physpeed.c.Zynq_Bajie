@@ -1093,7 +1093,11 @@ static u32_t get_Realtek_RTL8211F_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 	XEmacPs_PhyRead(xemacpsp, phy_addr, IEEE_SPECIFIC_STATUS_REG, &status_speed);
 	xil_printf("DEBUG RTL8211F: reg1(status)=0x%04X, reg17(spec_status)=0x%04X\r\n", status, status_speed);
 
-	if (status_speed & 0x400) {
+	// This chip doesn't set reg17 bit10 ("speed/duplex resolved") the way
+	// the standard IEEE_SPECIFIC_STATUS_REG assumption expects, even
+	// though its speed bits [15:14] and the standard BMSR link bit (reg1,
+	// IEEE_STAT_LINK_STATUS) are both valid - gate on the latter instead.
+	if (status & IEEE_STAT_LINK_STATUS) {
 		temp_speed = status_speed & IEEE_SPEED_MASK;
 		if (temp_speed == IEEE_SPEED_1000) {
 			return 1000;
@@ -1103,7 +1107,7 @@ static u32_t get_Realtek_RTL8211F_phy_speed(XEmacPs *xemacpsp, u32_t phy_addr)
 			return 10;
 		}
 	} else {
-		xil_printf("DEBUG RTL8211F: reg17 bit10 (speed/duplex resolved) is 0 (Link Down)\r\n");
+		xil_printf("DEBUG RTL8211F: reg1 (BMSR) link status bit is 0 (Link Down)\r\n");
 	}
 
 	return XST_FAILURE;
