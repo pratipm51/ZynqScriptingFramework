@@ -96,6 +96,43 @@ def restore_bsp_config(platform):
     else:
         print("   ⚠️  Warning: Target bsp.yaml not found to overwrite.")
 
+def sync_fsbl_ps7_init(platform):
+    # For an ALREADY-EXISTING platform, platform.update_hw()/domain.regenerate()
+    # correctly refresh the hardware-derived staging copy of ps7_init.c/.h under
+    # zynq_fsbl/zynq_fsbl_bsp/hw_artifacts/, but do NOT copy them over the actual
+    # files that get compiled into fsbl.elf (zynq_fsbl/ps7_init.c and .h) -
+    # apparently because the zynq_fsbl domain treats those as app-level sources
+    # that might have been hand-edited, and won't silently overwrite them.
+    #
+    # Left unsynced, FSBL keeps running an OLD ps7_init() - stale MIO/clock
+    # config that predates whatever peripherals were added after this platform
+    # was first created - while `make run` (JTAG) stays completely correct,
+    # since it uses a separately-and-correctly-regenerated ps7_init.tcl instead
+    # of fsbl.elf's compiled code. This makes the bug invisible to JTAG-based
+    # testing and only shows up on a real cold boot (make boot / SD boot),
+    # typically as FSBL hanging silently very early (e.g. in InitSD()) with no
+    # UART output at all. Root-caused via JTAG stack inspection of a hung core
+    # on the Zynq_Bajie board bring-up - see that project's SD.md for the full
+    # diagnosis.
+    #
+    # Fix: after every build of an existing platform, explicitly re-sync the
+    # live ps7_init.c/.h from the freshly-regenerated hw_artifacts copy.
+    fsbl_dir = os.path.join(WORKSPACE, plat_name, "zynq_fsbl")
+    hw_artifacts_dir = os.path.join(fsbl_dir, "zynq_fsbl_bsp", "hw_artifacts")
+
+    changed = False
+    for filename in ("ps7_init.c", "ps7_init.h"):
+        src = os.path.join(hw_artifacts_dir, filename)
+        dest = os.path.join(fsbl_dir, filename)
+        if not os.path.exists(src):
+            continue
+        if os.path.exists(dest) and open(src, "rb").read() == open(dest, "rb").read():
+            continue
+        print(f"   🔄 Syncing stale FSBL {filename} from hw_artifacts (hardware config changed)...")
+        shutil.copy2(src, dest)
+        changed = True
+    return changed
+
 def apply_phy_patch():
     # Apply a custom xemacpsif_physpeed.c patch if present. Independent of
     # whether a saved BSP yaml config exists (unlike restore_bsp_config,
@@ -135,10 +172,17 @@ if not os.path.exists(plat_dir):
     apply_phy_patch()
     print(f"🔨 Building Platform {plat_name}...")
     platform.build()
+    # FSBL's ps7_init.c/.h should already match a freshly-created platform's
+    # hardware, but sync unconditionally anyway - cheap, and guards against
+    # any future change to platform-creation ordering silently reintroducing
+    # the same staleness bug fixed below for the existing-platform path.
+    if sync_fsbl_ps7_init(platform):
+        print(f"🔨 Re-linking FSBL against synced ps7_init.c...")
+        platform.build()
 else:
     print(f"✅ Platform {plat_name} already exists.")
     platform = client.get_component(name=plat_name)
-    
+
     needs_rebuild = False
     if os.path.exists(XSA_PATH) and os.path.exists(platform_xpfm):
         if os.path.getmtime(XSA_PATH) > os.path.getmtime(platform_xpfm):
@@ -152,6 +196,15 @@ else:
 
     print(f"🔨 Rebuilding Platform {plat_name}...")
     platform.build()
+
+    # platform.update_hw()/domain.regenerate() refresh FSBL's hardware-derived
+    # staging files but don't copy them over the ones actually compiled into
+    # fsbl.elf - left alone, FSBL silently keeps running a stale ps7_init()
+    # that doesn't match the current hardware. See sync_fsbl_ps7_init() above
+    # for the full story. Re-link if the sync found (and fixed) a mismatch.
+    if sync_fsbl_ps7_init(platform):
+        print(f"🔨 Re-linking FSBL against synced ps7_init.c...")
+        platform.build()
 
 platform_path = os.path.join(WORKSPACE, plat_name, "export", plat_name, f"{plat_name}.xpfm")
 
