@@ -162,10 +162,10 @@ edit-hw:
 	@echo "🛠️ Opening Block Design for $(BOARD)..."
 	rm -rf project_1 myproj clockInfo.txt
 	@if [ -f board_configs/$(BOARD)_bd.tcl ]; then \
-		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD) $(TARGET_LANGUAGE); \
+		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD) $(TARGET_LANGUAGE) $(PART); \
 	else \
 		echo "ℹ️ No configuration found. Opening blank Vivado instance for $(BOARD)..."; \
-		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD) $(TARGET_LANGUAGE); \
+		vivado -mode gui -source scripts/vivado_setup.tcl -tclargs $(BOARD) $(TARGET_LANGUAGE) $(PART); \
 	fi
 
 # Reminder for the user
