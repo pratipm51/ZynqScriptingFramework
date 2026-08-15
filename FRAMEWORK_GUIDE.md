@@ -465,6 +465,28 @@ Running `make edit-sw APP=eth_server` (with a matching `APPS` entry) creates `Zy
 4. Check the real component name (`ls vitis_ws/` or the Vitis component list), then edit `project_config.mk` so the `APPS` shortcut matches that name exactly.
 5. Only then run `make sync-sw` / `make sw` / `make run` — these all key off the `APPS` shortcut to locate `vitis_ws/<shortcut>/`, so it must match before they're used.
 
+### Automatic PHY Speed Driver Patches (`sw/patches/`)
+
+Some Zynq development boards use Ethernet PHY chips that differ from standard Xilinx driver defaults (such as the Realtek RTL8211E-VL on the **Zybo Z7** or **EBAZ4205**). Stock Xilinx lwIP drivers primarily target Marvell or TI PHYs; without board-specific handling, Realtek PHY autonegotiation and link status probing can fail during startup with errors such as `Phy setup error : link_speed invalid`.
+
+To support non-standard or board-specific PHYs without modifying global Xilinx Vitis installation files, the framework automatically injects patches during `make sw`:
+
+#### How Patch Discovery Works
+During software builds, `scripts/build_sw.py` scans `sw/patches/` in the project root:
+1. **Board-Specific Patch**: `sw/patches/xemacpsif_physpeed.c.<BOARD>` (e.g., `sw/patches/xemacpsif_physpeed.c.zybo_z7` when `BOARD = zybo_z7`).
+2. **Generic Fallback Patch**: `sw/patches/xemacpsif_physpeed.c` (used if no board-specific patch matches).
+
+If a patch file is found, the framework automatically copies it into the BSP's lwIP network interface directory:
+```text
+vitis_ws/<PLATFORM>/ps7_cortexa9_0/<OS>_ps7_cortexa9_0/bsp/libsrc/lwip220/src/lwip-2.2.0/contrib/ports/xilinx/netif/xemacpsif_physpeed.c
+```
+and recompiles `liblwip220.a` into your application.
+
+#### Zybo Z7 PHY Patch Details (`xemacpsif_physpeed.c.zybo_z7`)
+- **Target Chip**: Realtek RTL8211E-VL PHY.
+- **Link Status & Latching Reads**: Reads the IEEE BMSR (Register 1) twice to clear latching-low link status bits and checks both BMSR link status and PHYSR (Register 17) speed/duplex resolved bits.
+- **Graceful Disconnected Link Fallback**: If an Ethernet cable is unplugged at boot, the driver logs a warning (`Ethernet link down (cable disconnected). Defaulting link speed to 1000 Mbps`) and defaults the Zynq SLCR clock dividers to 1000 Mbps instead of aborting MAC initialization with `XST_FAILURE`. This allows lwIP and FreeRTOS to initialize cleanly so that networking functions immediately when a cable is plugged in later.
+
 ---
 
 ## 13. Git Best Practices
