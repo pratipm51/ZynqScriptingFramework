@@ -499,6 +499,12 @@ A core strength of this framework is combining **graphical Block Design orchestr
 > **Why `top.vhd` Is Safe From Overwriting:**
 > The framework auto-bootstraps `src/hdl/top.vhd` **only if it does not already exist**. Once created, clicking "Sync to Framework" in Vivado or running `make hw` will **never overwrite your `top.vhd`**. You can safely edit `top.vhd`, add custom component declarations, instantiate custom VHDL/Verilog entities, and wire up FPGA pins.
 
+> [!NOTE]
+> **Architecture Clarification (`top.vhd` Master vs `system` BD Sub-Module):**
+> You do **NOT** need to create another top-level file (such as `zybo_top.vhd`). `src/hdl/top.vhd` **IS ALREADY your permanent master top-level module**.
+> The Block Design wrapper (`system` / `system_wrapper`) is instantiated **inside `top.vhd`** as a sub-component (`system_i : component system`).
+> When you externalize `M04_AXI_0` in the Block Design, those AXI signals become ports on `component system`. In `top.vhd`, you update `component system`'s port list, connect its AXI ports to internal signals in `top.vhd`, and wire those signals directly into `axi_pwm.vhd` (which is also instantiated inside `top.vhd` alongside `system_i`).
+
 ---
 
 ### Step-by-Step Walkthrough: Connecting Custom AXI PWM to Zynq ARM
