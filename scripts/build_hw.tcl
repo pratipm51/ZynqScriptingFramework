@@ -74,7 +74,6 @@ proc read_sources {lib_name path} {
             } else {
                 read_vhdl -library $lib_name $f
             }
-            add_files -norecurse $f
         }
     }
 }
