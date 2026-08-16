@@ -507,9 +507,11 @@ For custom AXI peripherals, **adding your VHDL core directly inside the Block De
 - **Git Friendly**: `write_bd_tcl` captures the custom block, connections, and address mapping directly inside `board_configs/${BOARD}_bd.tcl`.
 
 #### Step-by-Step (Using "Add Module" / Module Reference):
-1. Copy your VHDL file (e.g. [`utilities/hdl_templates/axi_pwm.vhd`](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/axi_pwm.vhd)) into `src/hdl/` or add it to project sources.
+1. **Source File Availability**:  
+   - Any VHDL core in `utilities/hdl_templates/` (e.g. `axi_pwm.vhd`, `axi_gpio.vhd`, `axi_bram_ctrl.vhd`) is **automatically registered by the framework** into Vivado's project fileset. You do **not** need to copy it into `src/hdl/`!
+   - For brand-new custom VHDL files written for your project, simply save them in `src/hdl/`.
 2. Open Block Design (`make edit-hw`).
-3. Right-click the Block Design canvas → **Add Module...** → Select **`axi_pwm`**.
+3. Right-click the Block Design canvas → **Add Module...** → Select your VHDL module (e.g. **`axi_pwm`**).
 4. Vivado places your `axi_pwm` block directly on the BD canvas.
 5. Connect `s_axi` to the AXI Interconnect, connect `s_axi_aclk` and `s_axi_aresetn`.
 6. Right-click the `pwm_o` port → **Make External** (renaming port to e.g. `rgb_led_o`).
