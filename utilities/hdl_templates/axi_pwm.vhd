@@ -1,12 +1,12 @@
 ----------------------------------------------------------------------------------
 -- Entity Name: axi_pwm
--- Description: Generic Parametric AXI-Lite Multi-Channel PWM Controller (VHDL-2008)
+-- Description: Generic Parametric AXI4-Lite Multi-Channel PWM Controller (VHDL-2008)
 --              Designed for driving Tri-Color RGB LEDs, Motors, or Servos.
 --
 -- Features:
 --   - Parametric number of PWM output channels (NUM_CHANNELS, default 3 for RGB)
 --   - Configurable register bit-width (PWM_WIDTH, default 16 bits)
---   - AXI-Lite Record Interface (axil_m2s_t / axil_s2m_t) from bus_types_pkg
+--   - Standard AXI4-Lite Slave Interface (compatible with Vivado BD Module Reference)
 --   - Global Enable & Polarity Inversion Control
 --   - Hardware Clock Prescaler (prescaler_reg) for adjustable PWM frequency
 --   - Variable PWM Period (period_reg) for arbitrary resolution (8-bit, 10-bit, 16-bit, etc.)
@@ -28,7 +28,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use work.bus_types_pkg.all;
 
 entity axi_pwm is
     generic (
@@ -42,9 +41,30 @@ entity axi_pwm is
         s_axi_aclk    : in  std_logic;
         s_axi_aresetn : in  std_logic;
 
-        -- AXI-Lite Record Interface (from bus_types_pkg)
-        s_axi_m2s     : in  axil_m2s_t;
-        s_axi_s2m     : out axil_s2m_t;
+        -- AXI4-Lite Slave Interface (standard std_logic/vector ports for BD Module Reference)
+        s_axi_awaddr  : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+        s_axi_awprot  : in  std_logic_vector(2 downto 0);
+        s_axi_awvalid : in  std_logic;
+        s_axi_awready : out std_logic;
+
+        s_axi_wdata   : in  std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+        s_axi_wstrb   : in  std_logic_vector((AXI_DATA_WIDTH/8)-1 downto 0);
+        s_axi_wvalid  : in  std_logic;
+        s_axi_wready  : out std_logic;
+
+        s_axi_bresp   : out std_logic_vector(1 downto 0);
+        s_axi_bvalid  : out std_logic;
+        s_axi_bready  : in  std_logic;
+
+        s_axi_araddr  : in  std_logic_vector(AXI_ADDR_WIDTH-1 downto 0);
+        s_axi_arprot  : in  std_logic_vector(2 downto 0);
+        s_axi_arvalid : in  std_logic;
+        s_axi_arready : out std_logic;
+
+        s_axi_rdata   : out std_logic_vector(AXI_DATA_WIDTH-1 downto 0);
+        s_axi_rresp   : out std_logic_vector(1 downto 0);
+        s_axi_rvalid  : out std_logic;
+        s_axi_rready  : in  std_logic;
 
         -- PWM Output Signals (Channel 0..NUM_CHANNELS-1)
         pwm_o         : out std_logic_vector(NUM_CHANNELS-1 downto 0)
@@ -81,16 +101,16 @@ architecture behavioral of axi_pwm is
 begin
 
     ------------------------------------------------------------------------------
-    -- AXI-Lite Signal Assignments
+    -- AXI-Lite Signal Output Assignments
     ------------------------------------------------------------------------------
-    s_axi_s2m.awready <= axi_awready;
-    s_axi_s2m.wready  <= axi_wready;
-    s_axi_s2m.bvalid  <= axi_bvalid;
-    s_axi_s2m.bresp   <= "00"; -- OKAY
-    s_axi_s2m.arready <= axi_arready;
-    s_axi_s2m.rdata   <= axi_rdata;
-    s_axi_s2m.rresp   <= "00"; -- OKAY
-    s_axi_s2m.rvalid  <= axi_rvalid;
+    s_axi_awready <= axi_awready;
+    s_axi_wready  <= axi_wready;
+    s_axi_bvalid  <= axi_bvalid;
+    s_axi_bresp   <= "00"; -- OKAY
+    s_axi_arready <= axi_arready;
+    s_axi_rdata   <= axi_rdata;
+    s_axi_rresp   <= "00"; -- OKAY
+    s_axi_rvalid  <= axi_rvalid;
 
     ------------------------------------------------------------------------------
     -- AXI-Lite Write Address Handshake
@@ -102,9 +122,9 @@ begin
                 axi_awready <= '0';
                 awaddr_reg  <= (others => '0');
             else
-                if axi_awready = '0' and s_axi_m2s.awvalid = '1' and s_axi_m2s.wvalid = '1' then
+                if axi_awready = '0' and s_axi_awvalid = '1' and s_axi_wvalid = '1' then
                     axi_awready <= '1';
-                    awaddr_reg  <= s_axi_m2s.awaddr;
+                    awaddr_reg  <= s_axi_awaddr;
                 else
                     axi_awready <= '0';
                 end if;
@@ -121,7 +141,7 @@ begin
             if s_axi_aresetn = '0' then
                 axi_wready <= '0';
             else
-                if axi_wready = '0' and s_axi_m2s.wvalid = '1' and s_axi_m2s.awvalid = '1' then
+                if axi_wready = '0' and s_axi_wvalid = '1' and s_axi_awvalid = '1' then
                     axi_wready <= '1';
                 else
                     axi_wready <= '0';
@@ -143,34 +163,34 @@ begin
                 reg_period    <= (others => '1');
                 reg_duty      <= (others => (others => '0'));
             else
-                if axi_awready = '0' and axi_wready = '0' and s_axi_m2s.awvalid = '1' and s_axi_m2s.wvalid = '1' then
-                    reg_idx := to_integer(unsigned(s_axi_m2s.awaddr(11 downto ADDR_LSB)));
+                if axi_awready = '0' and axi_wready = '0' and s_axi_awvalid = '1' and s_axi_wvalid = '1' then
+                    reg_idx := to_integer(unsigned(s_axi_awaddr(11 downto ADDR_LSB)));
 
                     case reg_idx is
                         when 0 => -- 0x00: CTRL
-                            if s_axi_m2s.wstrb(0) = '1' then
-                                reg_ctrl <= s_axi_m2s.wdata(1 downto 0);
+                            if s_axi_wstrb(0) = '1' then
+                                reg_ctrl <= s_axi_wdata(1 downto 0);
                             end if;
 
                         when 1 => -- 0x04: PRESCALER
                             for b in 0 to (PWM_WIDTH-1)/8 loop
-                                if s_axi_m2s.wstrb(b) = '1' then
-                                    reg_prescaler((b+1)*8-1 downto b*8) <= s_axi_m2s.wdata((b+1)*8-1 downto b*8);
+                                if s_axi_wstrb(b) = '1' then
+                                    reg_prescaler((b+1)*8-1 downto b*8) <= s_axi_wdata((b+1)*8-1 downto b*8);
                                 end if;
                             end loop;
 
                         when 2 => -- 0x08: PERIOD
                             for b in 0 to (PWM_WIDTH-1)/8 loop
-                                if s_axi_m2s.wstrb(b) = '1' then
-                                    reg_period((b+1)*8-1 downto b*8) <= s_axi_m2s.wdata((b+1)*8-1 downto b*8);
+                                if s_axi_wstrb(b) = '1' then
+                                    reg_period((b+1)*8-1 downto b*8) <= s_axi_wdata((b+1)*8-1 downto b*8);
                                 end if;
                             end loop;
 
                         when others => -- 0x0C + i*4: DUTY_CHi
                             if reg_idx >= 3 and reg_idx < (3 + NUM_CHANNELS) then
                                 for b in 0 to (PWM_WIDTH-1)/8 loop
-                                    if s_axi_m2s.wstrb(b) = '1' then
-                                        reg_duty(reg_idx - 3)((b+1)*8-1 downto b*8) <= s_axi_m2s.wdata((b+1)*8-1 downto b*8);
+                                    if s_axi_wstrb(b) = '1' then
+                                        reg_duty(reg_idx - 3)((b+1)*8-1 downto b*8) <= s_axi_wdata((b+1)*8-1 downto b*8);
                                     end if;
                                 end loop;
                             end if;
@@ -191,7 +211,7 @@ begin
             else
                 if axi_awready = '1' and axi_wready = '1' and axi_bvalid = '0' then
                     axi_bvalid <= '1';
-                elsif s_axi_m2s.bready = '1' and axi_bvalid = '1' then
+                elsif s_axi_bready = '1' and axi_bvalid = '1' then
                     axi_bvalid <= '0';
                 end if;
             end if;
@@ -208,9 +228,9 @@ begin
                 axi_arready <= '0';
                 araddr_reg  <= (others => '0');
             else
-                if axi_arready = '0' and s_axi_m2s.arvalid = '1' then
+                if axi_arready = '0' and s_axi_arvalid = '1' then
                     axi_arready <= '1';
-                    araddr_reg  <= s_axi_m2s.araddr;
+                    araddr_reg  <= s_axi_araddr;
                 else
                     axi_arready <= '0';
                 end if;
@@ -249,7 +269,7 @@ begin
                                 axi_rdata(PWM_WIDTH-1 downto 0) <= reg_duty(reg_idx - 3);
                             end if;
                     end case;
-                elsif s_axi_m2s.rready = '1' and axi_rvalid = '1' then
+                elsif s_axi_rready = '1' and axi_rvalid = '1' then
                     axi_rvalid <= '0';
                 end if;
             end if;
