@@ -41,6 +41,14 @@ if {[get_projects -quiet] == ""} {
         set_property ip_repo_paths $ip_repo_paths [current_project]
         update_ip_catalog
     }
+
+    # --- Add HDL source files (src/hdl & utilities/hdl_templates) for BD Module Reference ---
+    set hdl_files [concat [glob -nocomplain "src/hdl/*.vhd" "src/hdl/*.v" "src/hdl/*.sv"] \
+                          [glob -nocomplain "utilities/hdl_templates/*.vhd"]]
+    if {[llength $hdl_files] > 0} {
+        puts "📦 Adding [llength $hdl_files] HDL source files to project..."
+        add_files -norecurse $hdl_files
+    }
 }
 
 # --- THE SELF-HEALING REPAIR & BOOTSTRAP ---
