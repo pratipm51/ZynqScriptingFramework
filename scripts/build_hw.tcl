@@ -211,7 +211,7 @@ if {[file exists $bd_script]} {
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
     puts "📦 Generated Wrapper: $wrapper_file"
-    add_files -norecurse $wrapper_file
+    read_vhdl -library xil_defaultlib $wrapper_file
     set top_module "top"
 } else {
     puts "ℹ️ No board configuration found. Using pure HDL flow with top module: 'top'"
