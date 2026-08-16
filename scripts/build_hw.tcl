@@ -132,7 +132,8 @@ foreach lib_entry $lib_entries {
     }
 }
 
-# --- Read Local Sources ---
+# --- Read Local Sources & Templates ---
+read_sources xil_defaultlib "./utilities/hdl_templates"
 read_sources xil_defaultlib "./src/hdl"
 
 # --- Read XDC Constraints ---
