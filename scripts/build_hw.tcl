@@ -211,8 +211,8 @@ if {[file exists $bd_script]} {
     generate_target all $bd_file
     set wrapper_file [make_wrapper -files $bd_file -top]
     puts "📦 Generated Wrapper: $wrapper_file"
+    file copy -force $wrapper_file "./src/hdl/system_wrapper.vhd"
     add_files -norecurse [glob -nocomplain "src/hdl/*.vhd" "utilities/hdl_templates/*.vhd"]
-    add_files -norecurse $wrapper_file
     set_property top top [current_fileset]
     update_compile_order -fileset sources_1
     set top_module "top"
