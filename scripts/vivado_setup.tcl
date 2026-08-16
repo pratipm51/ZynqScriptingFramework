@@ -69,36 +69,34 @@ proc ::sync_bd { {path ""} } {
     set wrapper_path [make_wrapper -files $bd_files -top]
     
     if {[file exists $wrapper_path]} {
-        # Read the wrapper and create a 'top' version
         set fp [open $wrapper_path r]
         set content [read $fp]
         close $fp
         
-        # Simple replacement: rename the wrapper entity/architecture to 'top'
         set wrapper_entity [file rootname [file tail $wrapper_path]]
-        regsub -all $wrapper_entity $content "top" new_content
-        
-        # Dynamically determine extension (.vhd or .v) from wrapper
         set ext [file extension $wrapper_path]
         set top_file [file normalize "./src/hdl/top${ext}"]
-        set top_name [file tail $top_file]
+        set bd_wrapper_file [file normalize "./src/hdl/${wrapper_entity}${ext}"]
 
         # Ensure the directory exists
         file mkdir [file dirname $top_file]
+
+        # Always sync the BD subsystem wrapper (e.g. system.vhd)
+        set fp [open $bd_wrapper_file w]
+        puts $fp $content
+        close $fp
+        puts "📦 Synced BD subsystem wrapper to: $bd_wrapper_file"
         
-        if {[file exists $top_file]} {
-            set top_file_new "${top_file}.new"
-            puts "📝 Existing $top_name found. Saving new wrapper to: $top_file_new"
-            set fp [open $top_file_new w]
-            puts $fp $new_content
-            close $fp
-            puts "👉 Action required: Compare and merge changes from .new into your $top_name"
-        } else {
-            puts "🌱 No $top_name found. Creating initial bootstrap top-level..."
+        if {![file exists $top_file]} {
+            # Bootstrap top-level only if missing
+            regsub -all $wrapper_entity $content "top" new_content
+            puts "🌱 No top-level found. Creating initial bootstrap top-level..."
             set fp [open $top_file w]
             puts $fp $new_content
             close $fp
             puts "✅ Created bootstrap top-level at: $top_file"
+        } else {
+            puts "✅ Master top-level exists ($top_file). Instantiate 'entity work.${wrapper_entity}' inside top${ext}."
         }
     }
 }
