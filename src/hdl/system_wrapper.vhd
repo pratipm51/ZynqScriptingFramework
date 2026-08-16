@@ -2,7 +2,7 @@
 --Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
 --Tool Version: Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
---Date        : Sat Aug 15 22:32:39 2026
+--Date        : Sat Aug 15 23:44:48 2026
 --Host        : desktop running 64-bit Linux Mint 22.1
 --Command     : generate_target system_wrapper.bd
 --Design      : system_wrapper
@@ -35,25 +35,6 @@ entity system_wrapper is
     FIXED_IO_ps_clk : inout STD_LOGIC;
     FIXED_IO_ps_porb : inout STD_LOGIC;
     FIXED_IO_ps_srstb : inout STD_LOGIC;
-    M04_AXI_0_araddr : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_arprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
-    M04_AXI_0_arready : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_arvalid : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_awaddr : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_awprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
-    M04_AXI_0_awready : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_awvalid : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_bready : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_bresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
-    M04_AXI_0_bvalid : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_rdata : in STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_rready : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_rresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
-    M04_AXI_0_rvalid : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_wdata : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_wready : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_wstrb : out STD_LOGIC_VECTOR ( 3 downto 0 );
-    M04_AXI_0_wvalid : out STD_LOGIC_VECTOR ( 0 to 0 );
     btn : in STD_LOGIC_VECTOR ( 3 downto 0 );
     hdmi_out_clk_n : out STD_LOGIC;
     hdmi_out_clk_p : out STD_LOGIC;
@@ -62,7 +43,7 @@ entity system_wrapper is
     hdmi_out_ddc_scl_io : inout STD_LOGIC;
     hdmi_out_ddc_sda_io : inout STD_LOGIC;
     led : out STD_LOGIC_VECTOR ( 3 downto 0 );
-    pl_clk0 : out STD_LOGIC;
+    rgb_led_o : out STD_LOGIC_VECTOR ( 2 downto 0 );
     sw : in STD_LOGIC_VECTOR ( 3 downto 0 )
   );
 end system_wrapper;
@@ -73,26 +54,7 @@ architecture STRUCTURE of system_wrapper is
     sw : in STD_LOGIC_VECTOR ( 3 downto 0 );
     btn : in STD_LOGIC_VECTOR ( 3 downto 0 );
     led : out STD_LOGIC_VECTOR ( 3 downto 0 );
-    pl_clk0 : out STD_LOGIC;
-    M04_AXI_0_awaddr : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_awprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
-    M04_AXI_0_awvalid : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_awready : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_wdata : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_wstrb : out STD_LOGIC_VECTOR ( 3 downto 0 );
-    M04_AXI_0_wvalid : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_wready : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_bresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
-    M04_AXI_0_bvalid : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_bready : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_araddr : out STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_arprot : out STD_LOGIC_VECTOR ( 2 downto 0 );
-    M04_AXI_0_arvalid : out STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_arready : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_rdata : in STD_LOGIC_VECTOR ( 31 downto 0 );
-    M04_AXI_0_rresp : in STD_LOGIC_VECTOR ( 1 downto 0 );
-    M04_AXI_0_rvalid : in STD_LOGIC_VECTOR ( 0 to 0 );
-    M04_AXI_0_rready : out STD_LOGIC_VECTOR ( 0 to 0 );
+    rgb_led_o : out STD_LOGIC_VECTOR ( 2 downto 0 );
     DDR_cas_n : inout STD_LOGIC;
     DDR_cke : inout STD_LOGIC;
     DDR_ck_n : inout STD_LOGIC;
@@ -178,25 +140,6 @@ system_i: component system
       FIXED_IO_ps_clk => FIXED_IO_ps_clk,
       FIXED_IO_ps_porb => FIXED_IO_ps_porb,
       FIXED_IO_ps_srstb => FIXED_IO_ps_srstb,
-      M04_AXI_0_araddr(31 downto 0) => M04_AXI_0_araddr(31 downto 0),
-      M04_AXI_0_arprot(2 downto 0) => M04_AXI_0_arprot(2 downto 0),
-      M04_AXI_0_arready(0) => M04_AXI_0_arready(0),
-      M04_AXI_0_arvalid(0) => M04_AXI_0_arvalid(0),
-      M04_AXI_0_awaddr(31 downto 0) => M04_AXI_0_awaddr(31 downto 0),
-      M04_AXI_0_awprot(2 downto 0) => M04_AXI_0_awprot(2 downto 0),
-      M04_AXI_0_awready(0) => M04_AXI_0_awready(0),
-      M04_AXI_0_awvalid(0) => M04_AXI_0_awvalid(0),
-      M04_AXI_0_bready(0) => M04_AXI_0_bready(0),
-      M04_AXI_0_bresp(1 downto 0) => M04_AXI_0_bresp(1 downto 0),
-      M04_AXI_0_bvalid(0) => M04_AXI_0_bvalid(0),
-      M04_AXI_0_rdata(31 downto 0) => M04_AXI_0_rdata(31 downto 0),
-      M04_AXI_0_rready(0) => M04_AXI_0_rready(0),
-      M04_AXI_0_rresp(1 downto 0) => M04_AXI_0_rresp(1 downto 0),
-      M04_AXI_0_rvalid(0) => M04_AXI_0_rvalid(0),
-      M04_AXI_0_wdata(31 downto 0) => M04_AXI_0_wdata(31 downto 0),
-      M04_AXI_0_wready(0) => M04_AXI_0_wready(0),
-      M04_AXI_0_wstrb(3 downto 0) => M04_AXI_0_wstrb(3 downto 0),
-      M04_AXI_0_wvalid(0) => M04_AXI_0_wvalid(0),
       btn(3 downto 0) => btn(3 downto 0),
       hdmi_out_clk_n => hdmi_out_clk_n,
       hdmi_out_clk_p => hdmi_out_clk_p,
@@ -209,8 +152,7 @@ system_i: component system
       hdmi_out_ddc_sda_o => hdmi_out_ddc_sda_o,
       hdmi_out_ddc_sda_t => hdmi_out_ddc_sda_t,
       led(3 downto 0) => led(3 downto 0),
-      pl_clk0 => pl_clk0,
+      rgb_led_o(2 downto 0) => rgb_led_o(2 downto 0),
       sw(3 downto 0) => sw(3 downto 0)
     );
 end STRUCTURE;
-
