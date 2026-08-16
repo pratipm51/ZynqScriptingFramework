@@ -491,9 +491,40 @@ and recompiles `liblwip220.a` into your application.
 
 ---
 
-## 14. Integrating Custom VHDL/Verilog & AXI IP (`top.vhd`)
+## 14. Integrating Custom VHDL/Verilog & AXI IP
 
-A core strength of this framework is combining **graphical Block Design orchestration** with **hand-written VHDL/Verilog custom logic**. Custom hardware modules (such as `axi_pwm.vhd`, `axi_gpio.vhd`, custom DSP accelerators, or motor controllers) are instantiated directly in `src/hdl/top.vhd` without needing to package them as complex Vivado IP blocks.
+The framework supports two clear workflows for integrating custom VHDL/Verilog IP (such as `axi_pwm.vhd`, `axi_gpio.vhd`, or custom DSP blocks) into your Zynq project:
+
+---
+
+### Workflow A (RECOMMENDED): Block Design Integration via Module Reference or IP Repo
+
+For custom AXI peripherals, **adding your VHDL core directly inside the Block Design canvas** is the cleanest, fastest, and most git-friendly approach:
+
+- **100% Automated AXI Wiring**: Vivado automatically connects bus interfaces, clocks, and resets on the BD canvas.
+- **Automatic Address Management**: Base addresses are assigned automatically in Vivado Address Editor and exported to `xparameters.h` for software.
+- **Zero Boilerplate Code**: Requires zero manual VHDL bus mapping in `top.vhd`.
+- **Git Friendly**: `write_bd_tcl` captures the custom block, connections, and address mapping directly inside `board_configs/${BOARD}_bd.tcl`.
+
+#### Step-by-Step (Using "Add Module" / Module Reference):
+1. Copy your VHDL file (e.g. [`utilities/hdl_templates/axi_pwm.vhd`](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/axi_pwm.vhd)) into `src/hdl/` or add it to project sources.
+2. Open Block Design (`make edit-hw`).
+3. Right-click the Block Design canvas → **Add Module...** → Select **`axi_pwm`**.
+4. Vivado places your `axi_pwm` block directly on the BD canvas.
+5. Connect `s_axi` to the AXI Interconnect, connect `s_axi_aclk` and `s_axi_aresetn`.
+6. Right-click the `pwm_o` port → **Make External** (renaming port to e.g. `rgb_led_o`).
+7. Open **Address Editor** tab → Right-click `axi_pwm` → **Assign Address** (e.g. `0x43C00000`).
+8. Click **"Sync to Framework"** on the Vivado toolbar.
+
+> [!TIP]
+> **Custom IP Repositories (`ip_repos/`):**
+> If you package custom IP using Vivado's IP Packager, place the IP folder in `ip_repos/`. The framework automatically registers `ip_repos/` via `ip_repos.txt`, making your IP searchable in the **Add IP** (`Ctrl+I`) dialog!
+
+---
+
+### Workflow B (ADVANCED): Top-Level HDL Integration (`top.vhd`)
+
+Use this workflow **only when a developer must perform very specific VHDL/Verilog custom glue logic**, top-level PMOD pin buffers, IOBUFs, or custom timing wrappers outside the Block Design.
 
 > [!IMPORTANT]
 > **Clear Ownership Division: Framework-Managed Subsystem vs. User Application Top**
@@ -510,7 +541,7 @@ A core strength of this framework is combining **graphical Block Design orchestr
 
 ---
 
-### Step-by-Step Walkthrough: Connecting Custom AXI PWM to Zynq ARM
+### Step-by-Step Walkthrough: Connecting Custom AXI PWM in `top.vhd`
 
 #### Step A: Expose AXI Bus in Block Design (`make edit-hw`)
 1. Open the Block Design in Vivado (`make edit-hw`).
