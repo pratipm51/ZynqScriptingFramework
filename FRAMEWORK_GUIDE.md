@@ -87,6 +87,7 @@ Below is the complete guide to the framework's `Makefile` targets:
 | `make list-arm-params` | **Discovery:** Shows the absolute paths to the generated `xparameters.h` and driver headers for Zynq ARM development. |
 | `make load-ram` | **Maintenance:** Pushes the `BOOT.BIN` to DDR memory via JTAG at `0x08000000`. Useful for manual NAND flashing via U-Boot. |
 | `make gui` | **Vivado GUI:** Launches a standard Vivado GUI instance in the background. |
+| `make docs` | **Documentation:** Renders `FRAMEWORK_GUIDE.md` into styled HTML at `docs/FRAMEWORK_GUIDE.html` using `scripts/gen_docs.py`. |
 | `make clean` | **Cleanup:** Wipes all build artifacts (`hw_build`, `vitis_ws`), temporary Vivado projects (`project_1`, `myproj`), and log files. |
 
 > [!NOTE]
