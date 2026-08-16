@@ -508,12 +508,14 @@ A core strength of this framework is combining **graphical Block Design orchestr
 2. Double-click the **ZYNQ7 Processing System** IP → Select **PS-PL Configuration** in the left Page Navigator → Expand **AXI Non Secure Enablement** → **GP Master AXI Interface** → Check **`M AXI GP0 interface`** (or set `set_property CONFIG.PCW_USE_M_AXI_GP0 1 [get_bd_cells processing_system7_0]` in Tcl).
 3. Connect `M_AXI_GP0` to an **AXI Interconnect** or **AXI SmartConnect** IP.
 4. On the AXI Interconnect, create a Master interface port (e.g., `M00_AXI`) and **make it External** (Right-click `M00_AXI` → **Make External**), or externalize individual AXI signals (`m_axi_awaddr`, `wdata`, `wvalid`, etc.).
-5. Make `FCLK_CLK0` **External** as `pl_clk0` and associate it with the external AXI port:
-   - In Block Design, Right-click `processing_system7_0/FCLK_CLK0` → **Make External** (creates port `pl_clk0`).
-   - Click `pl_clk0` → Properties → Config → Set `ASSOCIATED_BUSIF` to your external AXI port name (e.g., `M00_AXI` or `M04_AXI_0`).
+5. Connect `FCLK_CLK0` to an external clock port `pl_clk0` and associate it with the external AXI port:
+   - Since `FCLK_CLK0` is already connected to internal IPs, right-click Block Design canvas → **Create Port...** → Name: `pl_clk0`, Direction: `Output`, Type: `Clock`.
+   - Connect `pl_clk0` port to the existing `FCLK_CLK0` net.
+   - Click `pl_clk0` port → Block Port Properties → Config → Set `ASSOCIATED_BUSIF` to your external AXI port name (e.g., `M00_AXI` or `M04_AXI_0`).
    - *Tcl equivalent:*
      ```tcl
-     make_bd_pins_external [get_bd_pins processing_system7_0/FCLK_CLK0] -name pl_clk0
+     create_bd_port -dir O -type clk pl_clk0
+     connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_ports pl_clk0]
      set_property CONFIG.ASSOCIATED_BUSIF {M00_AXI} [get_bd_ports /pl_clk0]
      ```
    *(Note: Associating the clock port resolves Vivado warning `[BD 41-2559] AXI interface port is not associated to any clock port`).*
