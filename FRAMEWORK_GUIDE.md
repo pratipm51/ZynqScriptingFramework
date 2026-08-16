@@ -491,7 +491,140 @@ and recompiles `liblwip220.a` into your application.
 
 ---
 
-## 13. Git Best Practices
+## 14. Integrating Custom VHDL/Verilog & AXI IP (`top.vhd`)
+
+A core strength of this framework is combining **graphical Block Design orchestration** with **hand-written VHDL/Verilog custom logic**. Custom hardware modules (such as `axi_pwm.vhd`, `axi_gpio.vhd`, custom DSP accelerators, or motor controllers) are instantiated directly in `src/hdl/top.vhd` without needing to package them as complex Vivado IP blocks.
+
+> [!IMPORTANT]
+> **Why `top.vhd` Is Safe From Overwriting:**
+> The framework auto-bootstraps `src/hdl/top.vhd` **only if it does not already exist**. Once created, clicking "Sync to Framework" in Vivado or running `make hw` will **never overwrite your `top.vhd`**. You can safely edit `top.vhd`, add custom component declarations, instantiate custom VHDL/Verilog entities, and wire up FPGA pins.
+
+---
+
+### Step-by-Step Walkthrough: Connecting Custom AXI PWM to Zynq ARM
+
+#### Step A: Expose AXI Bus in Block Design (`make edit-hw`)
+1. Open the Block Design in Vivado (`make edit-hw`).
+2. Ensure the **ZYNQ7 Processing System** has its General Purpose Master AXI interface enabled (**`M_AXI_GP0`**).
+3. Connect `M_AXI_GP0` to an **AXI Interconnect** or **AXI SmartConnect** IP.
+4. On the AXI Interconnect, create a Master interface port (e.g., `M00_AXI`) and **make it External** (Right-click `M00_AXI` → **Make External**), or externalize individual AXI signals (`m_axi_awaddr`, `wdata`, `wvalid`, etc.).
+5. Open the **Address Editor** tab in Vivado and assign a memory base address to the external AXI interface (e.g., `0x43C00000`, Range: `64K`).
+6. Click **"Sync to Framework"** on the Vivado toolbar to update `board_configs/${BOARD}_bd.tcl`.
+
+---
+
+#### Step B: Instantiate Custom IP & Wire Ports in `src/hdl/top.vhd`
+1. Copy or reference your custom VHDL module (e.g. [`utilities/hdl_templates/axi_pwm.vhd`](file:///home/pratip/data/FPGA/ZynqScriptingFramework/utilities/hdl_templates/axi_pwm.vhd)) into `src/hdl/`.
+2. Add external pin ports (e.g., `rgb_led_o`) to `entity top` in `src/hdl/top.vhd`:
+
+```vhdl
+entity top is
+  port (
+    -- Standard Zynq PS & DDR Ports ...
+    FIXED_IO_mio : inout STD_LOGIC_VECTOR (53 downto 0);
+    DDR_addr     : inout STD_LOGIC_VECTOR (14 downto 0);
+    
+    -- Custom FPGA Top-Level Pins
+    rgb_led_o    : out STD_LOGIC_VECTOR (2 downto 0) -- Red, Green, Blue Tri-Color LED
+  );
+end top;
+```
+
+3. Instantiate `axi_pwm` inside `architecture STRUCTURE of top` and connect it to the AXI signals exposed by the Block Design wrapper `system_i`:
+
+```vhdl
+architecture STRUCTURE of top is
+    -- AXI Record signals from bus_types_pkg
+    signal axil_m2s : axil_m2s_t;
+    signal axil_s2m : axil_s2m_t;
+begin
+    -- Connect BD wrapper output to AXI record structure
+    axil_m2s.awaddr  <= m_axi_gp0_awaddr;
+    axil_m2s.awvalid <= m_axi_gp0_awvalid;
+    axil_m2s.wdata   <= m_axi_gp0_wdata;
+    axil_m2s.wstrb   <= m_axi_gp0_wstrb;
+    axil_m2s.wvalid  <= m_axi_gp0_wvalid;
+    axil_m2s.bready  <= m_axi_gp0_bready;
+    axil_m2s.araddr  <= m_axi_gp0_araddr;
+    axil_m2s.arvalid <= m_axi_gp0_arvalid;
+    axil_m2s.rready  <= m_axi_gp0_rready;
+
+    m_axi_gp0_awready <= axil_s2m.awready;
+    m_axi_gp0_wready  <= axil_s2m.wready;
+    m_axi_gp0_bvalid  <= axil_s2m.bvalid;
+    m_axi_gp0_bresp   <= axil_s2m.bresp;
+    m_axi_gp0_arready <= axil_s2m.arready;
+    m_axi_gp0_rdata   <= axil_s2m.rdata;
+    m_axi_gp0_rresp   <= axil_s2m.rresp;
+    m_axi_gp0_rvalid  <= axil_s2m.rvalid;
+
+    -- Instantiate 3-Channel AXI PWM Controller
+    inst_rgb_pwm : entity work.axi_pwm
+        generic map (
+            NUM_CHANNELS => 3,  -- 3 Channels: 0=Red, 1=Green, 2=Blue
+            PWM_WIDTH    => 16
+        )
+        port map (
+            s_axi_aclk    => pl_clk0,
+            s_axi_aresetn => pl_reset0_n,
+            s_axi_m2s     => axil_m2s,
+            s_axi_s2m     => axil_s2m,
+            pwm_o         => rgb_led_o
+        );
+
+    system_i : component system
+        port map (
+            -- Wire up Block Design ports ...
+        );
+end STRUCTURE;
+```
+
+4. Add physical pin constraints to `src/constr/${BOARD}.xdc`:
+```tcl
+# Zybo Z7 Tri-Color LED LD6 Constraints
+set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports { rgb_led_o[0] }]; # Red
+set_property -dict { PACKAGE_PIN F17   IOSTANDARD LVCMOS33 } [get_ports { rgb_led_o[1] }]; # Green
+set_property -dict { PACKAGE_PIN M17   IOSTANDARD LVCMOS33 } [get_ports { rgb_led_o[2] }]; # Blue
+```
+
+---
+
+#### Step C: Control Custom Hardware from C / FreeRTOS (`sw/zynq_ps/`)
+In your software application, write to the registers using the AXI base address assigned in Step A:
+
+```c
+#include "xil_io.h"
+
+#define PWM_BASEADDR  0x43C00000
+
+#define PWM_REG_CTRL  (PWM_BASEADDR + 0x00)
+#define PWM_REG_PRESC (PWM_BASEADDR + 0x04)
+#define PWM_REG_PERIOD(PWM_BASEADDR + 0x08)
+#define PWM_REG_RED   (PWM_BASEADDR + 0x0C)
+#define PWM_REG_GREEN (PWM_BASEADDR + 0x10)
+#define PWM_REG_BLUE  (PWM_BASEADDR + 0x14)
+
+void init_rgb_led(void) {
+    // 1. Set prescaler: divide 100MHz PL clock by 100 -> 1 MHz counter clock
+    Xil_Out32(PWM_REG_PRESC, 99);
+
+    // 2. Set period: 1000 counts -> 1 kHz PWM frequency
+    Xil_Out32(PWM_REG_PERIOD, 1000);
+
+    // 3. Enable PWM Generator (Bit 0 = 1)
+    Xil_Out32(PWM_REG_CTRL, 0x01);
+}
+
+void set_rgb_color(uint16_t red, uint16_t green, uint16_t blue) {
+    Xil_Out32(PWM_REG_RED,   red);   // 0 to 1000
+    Xil_Out32(PWM_REG_GREEN, green); // 0 to 1000
+    Xil_Out32(PWM_REG_BLUE,  blue);  // 0 to 1000
+}
+```
+
+---
+
+## 15. Git Best Practices
 This repository uses a **Whitelist .gitignore**. Only source files and scripts are tracked. Build artifacts are ignored automatically.
 
 **Before you commit:**
@@ -501,3 +634,4 @@ This repository uses a **Whitelist .gitignore**. Only source files and scripts a
 
 ---
 *Generated by Gemini CLI Framework Assistant*
+
