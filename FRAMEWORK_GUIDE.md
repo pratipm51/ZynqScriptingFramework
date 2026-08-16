@@ -505,7 +505,7 @@ A core strength of this framework is combining **graphical Block Design orchestr
 
 #### Step A: Expose AXI Bus in Block Design (`make edit-hw`)
 1. Open the Block Design in Vivado (`make edit-hw`).
-2. Ensure the **ZYNQ7 Processing System** has its General Purpose Master AXI interface enabled (**`M_AXI_GP0`**).
+2. Double-click the **ZYNQ7 Processing System** IP → Select **PS-PL Configuration** in the left Page Navigator → Expand **AXI Non Secure Enablement** → **GP Master AXI Interface** → Check **`M AXI GP0 interface`** (or set `set_property CONFIG.PCW_USE_M_AXI_GP0 1 [get_bd_cells processing_system7_0]` in Tcl).
 3. Connect `M_AXI_GP0` to an **AXI Interconnect** or **AXI SmartConnect** IP.
 4. On the AXI Interconnect, create a Master interface port (e.g., `M00_AXI`) and **make it External** (Right-click `M00_AXI` → **Make External**), or externalize individual AXI signals (`m_axi_awaddr`, `wdata`, `wvalid`, etc.).
 5. Open the **Address Editor** tab in Vivado and assign a memory base address to the external AXI interface (e.g., `0x43C00000`, Range: `64K`).
