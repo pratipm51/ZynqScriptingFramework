@@ -67,8 +67,8 @@ proc read_sources {lib_name path} {
     }
 
     if {[llength $vhd_files] > 0} {
-        puts "📦 Reading [llength $vhd_files] VHDL files into library: $lib_name"
-        read_vhdl -library $lib_name $vhd_files
+        puts "📦 Reading [llength $vhd_files] VHDL files into library: $lib_name (VHDL-2008)"
+        read_vhdl -vhdl2008 -library $lib_name $vhd_files
     }
 }
 
