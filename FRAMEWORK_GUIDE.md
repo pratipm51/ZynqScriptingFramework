@@ -496,8 +496,11 @@ and recompiles `liblwip220.a` into your application.
 A core strength of this framework is combining **graphical Block Design orchestration** with **hand-written VHDL/Verilog custom logic**. Custom hardware modules (such as `axi_pwm.vhd`, `axi_gpio.vhd`, custom DSP accelerators, or motor controllers) are instantiated directly in `src/hdl/top.vhd` without needing to package them as complex Vivado IP blocks.
 
 > [!IMPORTANT]
-> **Why `top.vhd` Is Safe From Overwriting:**
-> The framework auto-bootstraps `src/hdl/top.vhd` **only if it does not already exist**. Once created, clicking "Sync to Framework" in Vivado or running `make hw` will **never overwrite your `top.vhd`**. You can safely edit `top.vhd`, add custom component declarations, instantiate custom VHDL/Verilog entities, and wire up FPGA pins.
+> **Clear Ownership Division: Framework-Managed Subsystem vs. User Application Top**
+> 1. **`src/hdl/system_wrapper.vhd` (Framework / Vivado Managed)**:  
+>    Generated automatically by Vivado from the Block Design. Exposes the Zynq PS7, AXI interconnects, and external BD ports (`M04_AXI_0`, `pl_clk0`, DDR, MIO, etc.). Automatically updated when you click "Sync to Framework".
+> 2. **`src/hdl/top.vhd` (100% User Owned & Hand-Crafted)**:  
+>    The framework **never scripts or guesses your custom application logic**. On a brand-new project with no `top.vhd`, the framework creates a 1-to-1 placeholder `top.vhd` so the project compiles on day 1. From then on, **`top.vhd` is entirely yours**: you edit it manually to instantiate your custom VHDL/Verilog modules (`axi_pwm`, custom DSP cores, sensor interfaces), wire them to `system_wrapper`'s AXI buses, and route top-level physical FPGA pins.
 
 > [!NOTE]
 > **Architecture Clarification (`top.vhd` Master vs `system_wrapper` BD Subsystem):**
