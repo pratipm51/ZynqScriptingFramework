@@ -67,8 +67,15 @@ proc read_sources {lib_name path} {
     }
 
     if {[llength $vhd_files] > 0} {
-        puts "📦 Reading [llength $vhd_files] VHDL files into library: $lib_name (VHDL-2008)"
-        read_vhdl -vhdl2008 -library $lib_name $vhd_files
+        puts "📦 Reading [llength $vhd_files] VHDL files into library: $lib_name"
+        foreach f $vhd_files {
+            if {[string match "*axi_gpio.vhd*" $f] || [string match "*bus_types_pkg.vhd*" $f]} {
+                read_vhdl -vhdl2008 -library $lib_name $f
+            } else {
+                read_vhdl -library $lib_name $f
+            }
+            add_files -norecurse $f
+        }
     }
 }
 
@@ -136,6 +143,10 @@ foreach lib_entry $lib_entries {
 read_sources xil_defaultlib "./utilities/hdl_templates"
 read_sources xil_defaultlib "./src/hdl"
 
+# --- Enable automatic compile order for BD Module Reference resolution ---
+set_property source_mgmt_mode All [current_project]
+update_compile_order -fileset sources_1
+
 # --- Read XDC Constraints ---
 # Supports a single-file convention (src/constr/${BOARD}.xdc) and/or a
 # modular per-component directory (src/constr/${BOARD}/*.xdc). Filenames in
@@ -168,6 +179,7 @@ if {!$xdc_found} {
 # --- Auto-Detect Block Design ---
 if {[file exists $bd_script]} {
     puts "📝 Sourcing Board Configuration: $bd_script"
+    set bCheckModules 0
     source $bd_script
     
     # --- FORCE LANGUAGE OVERRIDE ---
