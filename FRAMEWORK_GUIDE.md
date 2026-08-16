@@ -511,12 +511,14 @@ A core strength of this framework is combining **graphical Block Design orchestr
 5. Connect `FCLK_CLK0` to an external clock port `pl_clk0` and associate it with the external AXI port:
    - Since `FCLK_CLK0` is already connected to internal IPs, right-click Block Design canvas → **Create Port...** → Name: `pl_clk0`, Direction: `Output`, Type: `Clock`.
    - Connect `pl_clk0` port to the existing `FCLK_CLK0` net.
-   - Click `pl_clk0` port → Block Port Properties → Config → Set `ASSOCIATED_BUSIF` to your external AXI port name (e.g., `M00_AXI` or `M04_AXI_0`).
+   - Click `pl_clk0` port → Block Port Properties → Config → Set `ASSOCIATED_BUSIF` to your **exact external AXI port name** (e.g., `M00_AXI` or `M04_AXI_0`).
+     > [!TIP]
+     > **Port Naming Note:** `ASSOCIATED_BUSIF` must match the exact **external top-level BD port name** reported in the Vivado Validation warning (e.g., `M04_AXI_0`), which may differ from the internal block pin name (e.g., `M01_AXI`).
    - *Tcl equivalent:*
      ```tcl
      create_bd_port -dir O -type clk pl_clk0
      connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_ports pl_clk0]
-     set_property CONFIG.ASSOCIATED_BUSIF {M00_AXI} [get_bd_ports /pl_clk0]
+     set_property CONFIG.ASSOCIATED_BUSIF {M04_AXI_0} [get_bd_ports /pl_clk0]
      ```
    *(Note: Associating the clock port resolves Vivado warning `[BD 41-2559] AXI interface port is not associated to any clock port`).*
 6. Open the **Address Editor** tab in Vivado and assign a memory base address to the external AXI interface (e.g., `0x43C00000`, Range: `64K`).
