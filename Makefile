@@ -77,7 +77,7 @@ hw:
 		exit 1; \
 	fi
 	@echo "🚀 Building Hardware for $(BOARD) (Part: $(PART), BD: $(BD_NAME))..."
-	rm -rf project_1 myproj clockInfo.txt
+	rm -rf project_1 myproj .srcs .gen clockInfo.txt
 	vivado -mode batch -source scripts/build_hw.tcl -tclargs $(BOARD) $(PART) $(TARGET_LANGUAGE) $(BD_NAME)
 	rm -f *.log *.jou clockInfo.txt
 
